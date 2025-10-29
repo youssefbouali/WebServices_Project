@@ -29,7 +29,7 @@ services:
   # ==========================================
   profile_service:
     build:
-      context: ./profile_service
+      context: ./profile
       dockerfile: Dockerfile
     container_name: healthtrack_profile_service
     restart: unless-stopped
