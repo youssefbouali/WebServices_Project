@@ -1,35 +1,69 @@
-# Device Module API
+تمام، سأجهز لك **README technique orienté GitHub**، qui décrit le projet HealthTrack de façon **pratique pour les développeurs**, incluant stack technique, modules, endpoints généraux et instructions pour setup local.
+
+---
+
+# HealthTrack – Plateforme de Suivi Médical Intelligent
 
 ## Description
 
-Device Module est une API REST développée avec **FastAPI** pour gérer des appareils IoT. Elle permet :
+HealthTrack est une application modulaire pour le **suivi médical des patients chroniques**.
+Elle permet de gérer :
 
-* Gestion complète des appareils (`CRUD`) dans **PostgreSQL**.
-* Enregistrement des données IoT envoyées par les appareils dans **InfluxDB**.
-* Consultation et lecture des mesures IoT via l’API.
-* Intégration facile avec un frontend ou un tableau de bord.
+* Profils utilisateurs (patients, médecins, administrateurs)
+* Appareils médicaux connectés (IoT)
+* Planification des rendez-vous
+* Suivi et rappels des traitements
 
----
-
-## Technologies
-
-* **Backend** : Python, FastAPI
-* **Base de données relationnelle** : PostgreSQL
-* **Base de données time-series** : InfluxDB 2.x
-* **Docker & Docker Compose** : pour déploiement et orchestration
+L’architecture est **multi-module**, chaque service étant indépendant et exposant des API REST sécurisées pour l’interopérabilité.
 
 ---
 
-## Installation
+## Stack Technique
 
-1. Cloner le repository :
+| Composant            | Technologie / Framework | Base de données                     |
+| -------------------- | ----------------------- | ----------------------------------- |
+| **Device**           | Python + FastAPI        | InfluxDB (Time-series) / PostgreSQL |
+| **Profile**          | Node.js + Express.js    | MongoDB                             |
+| **Planification**    | Java + Spring Boot      | PostgreSQL                          |
+| **SuiviTraitement**  | Java + Spring Boot      | PostgreSQL                          |
+| **Conteneurisation** | Docker & Docker Compose | –                                   |
 
-```bash
-git clone <repo_url>
-cd device-module
-```
+**Autres outils :** GitHub Actions (CI/CD), JWT pour authentification, HTTPS pour sécurité.
 
-2. Configurer les variables d’environnement dans `config.py` ou `.env` :
+---
+
+## Modules et API
+
+### 1. Profile Module
+
+* Gestion des utilisateurs et rôles
+* Endpoints principaux :
+
+  * `POST /profiles` – Créer un profil
+  * `GET /profiles` – Lister les profils
+  * `GET /profiles/{id}` – Récupérer un profil
+  * `PUT /profiles/{id}` – Modifier un profil
+  * `DELETE /profiles/{id}` – Supprimer un profil
+
+### 2. Device Module
+
+* Collecte et supervision des appareils connectés
+* Intégration avec InfluxDB pour stockage des mesures
+* Endpoints principaux :
+
+  * `POST /devices` – Ajouter un appareil
+  * `GET /devices` – Lister les appareils
+  * `GET /devices/{id}` – Détails d’un appareil
+  * `PUT /devices/{id}` – Mise à jour + enregistrement mesures
+  * `DELETE /devices/{id}` – Supprimer un appareil
+* CRUD direct sur les données InfluxDB via `write`, `query` et `delete`
+
+
+
+
+
+
+Configurer les variables d’environnement dans `config.py` ou `.env` :
 
 ```python
 DATABASE_URL=postgresql://device_user:device_pass@db:5432/device_db
@@ -39,7 +73,7 @@ INFLUX_ORG=my-org
 INFLUX_BUCKET=iot_data
 ```
 
-3. Lancer les services via Docker Compose :
+Lancer les services via Docker Compose :
 
 ```bash
 docker-compose up --build
@@ -137,16 +171,79 @@ Content-Type: application/json
 
 ---
 
+
+
+
+
+### 3. Planification Module
+
+* Gestion des rendez-vous
+* Endpoints principaux :
+
+  * `POST /appointments` – Créer un rendez-vous
+  * `GET /appointments` – Lister tous les rendez-vous
+  * `PUT /appointments/{id}` – Modifier un rendez-vous
+  * `DELETE /appointments/{id}` – Supprimer un rendez-vous
+
+### 4. SuiviTraitement Module
+
+* Suivi des traitements médicaux et rappels
+* Endpoints principaux :
+
+  * `POST /treatments` – Ajouter un traitement
+  * `GET /treatments` – Lister les traitements
+  * `PUT /treatments/{id}` – Mettre à jour un traitement
+  * `DELETE /treatments/{id}` – Supprimer un traitement
+
 ---
 
-## Docker
+## Installation & Setup
 
-* Le projet inclut `docker-compose.yml` pour orchestrer :
+### Prérequis
 
-  * `device-app` (FastAPI)
-  * `db` (PostgreSQL)
-  * `influxdb` (InfluxDB 2.x)
+* Docker & Docker Compose
+* Python 3.10+
+* Node.js 18+
+* Java 17+
+* Accès à InfluxDB et PostgreSQL
 
-* Les volumes pour persistance sont définis pour PostgreSQL et InfluxDB.
+### Setup local
 
----
+1. Cloner le repository :
+
+```bash
+git clone <repo_url>
+cd HealthTrack
+```
+
+2. Créer le fichier `.env` avec les variables :
+
+```bash
+# Profile
+MONGO_URI=mongodb://mongo:27017/healthtrack
+
+# Device
+INFLUX_URL=http://influxdb:8086
+INFLUX_TOKEN=my-token
+INFLUX_ORG=my-org
+INFLUX_BUCKET=iot_data
+POSTGRES_URL=postgresql://user:pass@db:5432/healthtrack
+
+# Planification & SuiviTraitement
+POSTGRES_URL=postgresql://user:pass@db:5432/healthtrack
+```
+
+3. Lancer les services via Docker Compose :
+
+```bash
+docker-compose up --build
+```
+
+* Profile (Node.js) → `http://localhost:3000`
+* MongoDB → `mongodb://localhost:27017`
+* Device (FastAPI) → `http://localhost:8000`
+* InfluxDB → `http://localhost:8086`
+* Planification (Java Spring Boot) → `http://localhost:8080`
+* SuiviTraitement (Java Spring Boot) → `http://localhost:8081`
+
+
