@@ -3,7 +3,8 @@ from .config import INFLUX_URL, INFLUX_TOKEN, INFLUX_ORG, INFLUX_BUCKET
 from datetime import datetime
 
 client = InfluxDBClient(url=INFLUX_URL, token=INFLUX_TOKEN, org=INFLUX_ORG)
-write_api = client.write_api(write_options=WritePrecision.NS)
+write_api = client.write_api(write_options=WriteOptions(precision=WritePrecision.NS))
+
 
 def write_iot_data(device_id: int, value: float):
     point = Point("device_measurement") \
