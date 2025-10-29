@@ -13,6 +13,16 @@ def get_db():
     finally:
         db.close()
 
+
+from .database import engine, Base
+
+Base.metadata.create_all(bind=engine)
+
+@app.get("/")
+def read_root():
+    return {"message": "Hello World"}
+
+
 @app.post("/devices/", response_model=schemas.Device)
 def create_device(device: schemas.DeviceCreate, db: Session = Depends(get_db)):
     return crud.create_device(db, device)
