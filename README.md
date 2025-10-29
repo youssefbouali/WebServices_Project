@@ -1,7 +1,3 @@
-تمام، سأجهز لك **README technique orienté GitHub**، qui décrit le projet HealthTrack de façon **pratique pour les développeurs**, incluant stack technique, modules, endpoints généraux et instructions pour setup local.
-
----
-
 # HealthTrack – Plateforme de Suivi Médical Intelligent
 
 ## Description
