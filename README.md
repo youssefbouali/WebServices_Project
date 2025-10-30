@@ -240,6 +240,6 @@ docker-compose up --build
 * Device (FastAPI) → `http://localhost:8000`
 * InfluxDB → `http://localhost:8086`
 * Planification (Java Spring Boot) → `http://localhost:8080`
-* SuiviTraitement (Java Spring Boot) → `http://localhost:8081`
+* SuiviTraitement (Java Spring Boot) → `http://localhost:8002`
 
 
