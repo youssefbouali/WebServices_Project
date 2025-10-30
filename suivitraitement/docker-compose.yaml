@@ -1,0 +1,37 @@
+version: "3.9"
+
+services:
+  # 🗄Base de données PostgreSQL
+  postgres:
+    image: postgres:17
+    container_name: postgres_suivipatients
+    restart: always
+    environment:
+      POSTGRES_DB: suivipatients
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin1234
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # Application Spring Boot
+  suivipatients:
+    build: .
+    container_name: suivipatients_app
+    depends_on:
+      - postgres
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/suivi_traitement
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: admin1234
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: "true"
+      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.PostgreSQLDialect
+      SERVER_PORT: 8002
+    ports:
+      - "8002:8002"
+    restart: always
+
+volumes:
+  postgres_data:
