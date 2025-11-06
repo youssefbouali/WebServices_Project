@@ -290,11 +290,3 @@ Write-Host "  Patient Token: $patientToken" -ForegroundColor Gray
 Write-Host "  Doctor Token:  $doctorToken" -ForegroundColor Gray
 Write-Host "  Admin Token:   $adminToken" -ForegroundColor Gray
 Write-Host ""
-Write-Host "Next steps:" -ForegroundColor Yellow
-Write-Host "  1. Import Postman collection" -ForegroundColor White
-Write-Host "  2. Use tokens above for manual testing" -ForegroundColor White
-Write-Host "  3. Check MongoDB with: mongosh" -ForegroundColor White
-Write-Host "     use healthtrack" -ForegroundColor White
-Write-Host "     db.profiles.find()" -ForegroundColor White
-Write-Host ""
-Write-Host "=====================================" -ForegroundColor Cyan

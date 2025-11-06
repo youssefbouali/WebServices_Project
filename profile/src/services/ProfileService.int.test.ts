@@ -7,20 +7,25 @@ let mongo: MongoMemoryServer;
 let ds: DataSource;
 let svc: ProfileService;
 
-// Increase timeout for first run (MongoDB binary download)
+// Augmente le timeout pour le premier lancement (téléchargement MongoDB)
 jest.setTimeout(120000); // 2 minutes
 
 beforeAll(async () => {
+  // 🔹 Création d'un serveur MongoDB en mémoire
   mongo = await MongoMemoryServer.create();
+
+  // 🔹 Configuration DataSource TypeORM (TypeORM 3+)
   ds = new DataSource({
     type: 'mongodb',
     url: mongo.getUri(),
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    synchronize: true,
+    synchronize: true,           // synchronise les entities
+    logging: false,
     entities: [Profile],
   });
+
   await ds.initialize();
+
+  // 🔹 Création du service avec le repository MongoDB
   svc = new ProfileService(ds.getMongoRepository(Profile));
 });
 
@@ -30,6 +35,7 @@ afterAll(async () => {
 });
 
 describe('ProfileService Integration Tests', () => {
+
   test('create & getByEmail', async () => {
     const profile = await svc.create({
       email: 'p@p.com',
@@ -38,9 +44,9 @@ describe('ProfileService Integration Tests', () => {
       role: ProfileRole.Patient,
       password: 'password123',
     });
-    
+
     expect(profile.email).toBe('p@p.com');
-    
+
     const found = await svc.getByEmail('p@p.com');
     expect(found?.email).toBe('p@p.com');
     expect(found?.firstName).toBe('P');
@@ -54,7 +60,7 @@ describe('ProfileService Integration Tests', () => {
       role: ProfileRole.Doctor,
       password: 'password123',
     });
-    
+
     const doctors = await svc.listByRole(ProfileRole.Doctor);
     expect(doctors.length).toBeGreaterThan(0);
     expect(doctors[0].role).toBe(ProfileRole.Doctor);
@@ -78,4 +84,5 @@ describe('ProfileService Integration Tests', () => {
     const validated = await svc.validateCredentials('auth@test.com', 'wrongpassword');
     expect(validated).toBeNull();
   });
+
 });
