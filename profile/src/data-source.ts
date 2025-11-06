@@ -8,8 +8,6 @@ export const AppDataSource = new DataSource({
   useNewUrlParser: true,
   useUnifiedTopology: true,
   synchronize: true, // dev only; manage indexes manually in prod
-  logging: false,
+  logging: process.env.NODE_ENV === 'development',
   entities: [Profile],
 });
-
-

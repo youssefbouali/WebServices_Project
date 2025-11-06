@@ -1,6 +1,6 @@
-﻿import { Entity, ObjectIdColumn, Column, Index } from 'typeorm';
+﻿import { Entity, ObjectIdColumn, Column, Index, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import type { ObjectId } from 'mongodb';
-import { IsEmail, IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsEmail, IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
 
 export enum ProfileRole {
   Patient = 'PATIENT',
@@ -20,10 +20,12 @@ export class Profile {
 
   @Column()
   @IsString()
+  @MinLength(2)
   firstName!: string;
 
   @Column()
   @IsString()
+  @MinLength(2)
   lastName!: string;
 
   @Column()
@@ -34,4 +36,23 @@ export class Profile {
   @IsOptional()
   @IsString()
   phone?: string;
+
+  @Column()
+  @IsOptional()
+  @IsString()
+  maladieChronique?: string;
+
+  @Column({ select: false })
+  @IsString()
+  @MinLength(6)
+  passwordHash!: string;
+
+  @Column({ default: true })
+  isActive!: boolean;
+
+  @CreateDateColumn()
+  createdAt!: Date;
+
+  @UpdateDateColumn()
+  updatedAt!: Date;
 }
