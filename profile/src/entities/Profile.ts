@@ -1,6 +1,6 @@
 ﻿import { Entity, ObjectIdColumn, Column, Index, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import type { ObjectId } from 'mongodb';
-import { IsEmail, IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsEnum, IsOptional, IsString, MinLength, IsBoolean } from 'class-validator';
 
 export enum ProfileRole {
   Patient = 'PATIENT',
@@ -42,13 +42,15 @@ export class Profile {
   @IsString()
   maladieChronique?: string;
 
-  @Column({ select: false })
+  // ✅ FIX: Remove select: false to allow password retrieval for validation
+  @Column()
   @IsString()
   @MinLength(6)
   passwordHash!: string;
 
-  @Column({ default: true })
-  isActive!: boolean;
+  @Column()
+  @IsBoolean()
+  isActive!: boolean; // ✅ Make sure this is not optional
 
   @CreateDateColumn()
   createdAt!: Date;

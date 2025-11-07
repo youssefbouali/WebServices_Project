@@ -16,6 +16,7 @@ export class ProfileService {
     const profile = this.repo.create({
       ...input,
       passwordHash,
+      isActive: true, // ✅ FIX: Set isActive to true by default
     });
 
     await validateOrReject(profile);
@@ -35,9 +36,9 @@ export class ProfileService {
   }
 
   async getByEmailWithPassword(email: string): Promise<Profile | null> {
+    // ✅ FIX: Use findOne with proper selection
     return this.repo.findOne({ 
       where: { email },
-      select: ['id', 'email', 'firstName', 'lastName', 'role', 'passwordHash', 'isActive']
     });
   }
 
@@ -50,7 +51,8 @@ export class ProfileService {
   }
 
   async listByRole(role: ProfileRole): Promise<Profile[]> {
-    return this.repo.find({ where: { role, isActive: true } });
+    // ✅ FIX: Don't filter by isActive here, return all users with that role
+    return this.repo.find({ where: { role } });
   }
 
   async update(id: string, input: UpdateProfileDto): Promise<Profile> {
@@ -80,10 +82,35 @@ export class ProfileService {
   }
 
   async validateCredentials(email: string, password: string): Promise<Profile | null> {
+    // ✅ FIX: Properly fetch profile with password hash
     const profile = await this.getByEmailWithPassword(email);
-    if (!profile || !profile.isActive) return null;
+    
+    console.log('Login attempt:', {
+      email,
+      profileFound: !!profile,
+      isActive: profile?.isActive,
+      hasPasswordHash: !!profile?.passwordHash,
+    });
+
+    if (!profile) {
+      console.log('Profile not found for email:', email);
+      return null;
+    }
+
+    if (!profile.isActive) {
+      console.log('Profile is inactive');
+      return null;
+    }
+
+    // ✅ FIX: Ensure passwordHash exists before comparing
+    if (!profile.passwordHash) {
+      console.error('No password hash found for profile');
+      return null;
+    }
 
     const isValid = await bcrypt.compare(password, profile.passwordHash);
+    console.log('Password validation result:', isValid);
+
     return isValid ? profile : null;
   }
 
