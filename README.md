@@ -243,3 +243,72 @@ docker-compose up --build
 * SuiviTraitement (Java Spring Boot) → `http://localhost:8002`
 
 
+```mermaid
+classDiagram
+    class Profile {
+        - int id
+        - string nom
+        - string email
+        - string role
+        - string maladieChronique
+        - string Password
+        + createProfile(nom, email, role)
+        + getProfile(id)
+        + updateProfile(id, data)
+        + deleteProfile(id)
+        + authenticate(email, password)
+    }
+
+    class Device {
+        - int deviceId
+        - string typeCapteur
+        - string statut
+        - float derniereValeur
+        - datetime derniereLecture
+        + collectData(deviceId, valeur)
+        + analyzeData(deviceId)
+        + sendAlert(patientId, message)
+        + registerDevice(patientId, typeCapteur)
+    }
+
+    class Planification {
+        - int rdvId
+        - int patientId
+        - int doctorId
+        - datetime dateRdv
+        - string statut
+        + scheduleAppointment(patientId, doctorId, dateRdv)
+        + getAppointments(patientId)
+        + cancelAppointment(rdvId)
+        + updateAppointment(rdvId, nouvelleDate)
+    }
+
+    class SuiviTraitement {
+        - int traitementId
+        - int patientId
+        - string medicament
+        - datetime dateDebut
+        - datetime dateFin
+        - bool suiviCorrect
+        + createTreatment(patientId, medicament, posologie, dateDebut, dateFin)
+        + getTreatments(patientId)
+        + validateDose(traitementId, datePrise)
+        + sendReminder(patientId)
+    }
+
+    %% Relations avec verbes d'action + cardinalités
+    Profile "1" --> "0..*" Device : associer / recevoir données
+    Profile "1" --> "0..*" Planification : planifier / gérer rendez-vous
+    Profile "1" --> "0..*" SuiviTraitement : superviser / organiser traitements
+
+    %%Device "1" --> "1" Profile : identifier / patient
+    Device "1" --> "0..*" Planification : envoyer / notifications
+    Device "1" --> "0..*" SuiviTraitement : utiliser / informations de traitement
+
+    %%Planification "1" --> "1" Profile : consulter / profil patient
+    %%Planification "1" --> "0..*" Device : utiliser / données médicales
+    %%Planification "1" --> "0..*" SuiviTraitement : ajuster / traitements
+
+    %%SuiviTraitement "1" --> "1" Profile : référencer / patient
+    %%SuiviTraitement "1" --> "0..*" Device : exploiter / constantes vitales
+    SuiviTraitement "1" --> "0..*" Planification : coordonner / rendez-vous
