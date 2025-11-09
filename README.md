@@ -15,13 +15,14 @@ L’architecture est **multi-module**, chaque service exposant des API REST séc
 
 ## Stack Technique
 
-| Composant            | Technologie / Framework | Base de données                     |
-| -------------------- | ----------------------- | ----------------------------------- |
-| **Device**           | Python + FastAPI        | InfluxDB (Time-series) / PostgreSQL |
-| **Profile**          | Node.js + Express.js    | MongoDB                             |
-| **Planification**    | Java + Spring Boot      | SQLServer                           |
-| **SuiviTraitement**  | Java + Spring Boot      | PostgreSQL                          |
-| **Conteneurisation** | Docker & Docker Compose | –                                   |
+| Composant            | Port / Technologie / Framework | Base de données                     |
+| -------------------- | -----------------------        | ----------------------------------- |
+| **Profile**          | 3000 Node.js + Express.js      | MongoDB                             |
+| **Device**           | 8000 Python + FastAPI          | InfluxDB (Time-series) / PostgreSQL |
+| **Planification**    | 8082 Java + Spring Boot        | SQLServer                           |
+| **SuiviTraitement**  | 8002 Java + Spring Boot        | PostgreSQL                          |
+| **FrontEnd**         | 5000 NextJS                    | -                                   |
+| **Conteneurisation** | Docker & Docker Compose        | –                                   |
 
 **Autres outils :** GitHub Actions (CI/CD), JWT pour authentification, HTTPS pour sécurité.
 
