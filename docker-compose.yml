@@ -1,13 +1,17 @@
 version: "3.9"
 
 networks:
-  webservices_project_iot-network:
+  iot-network:
+    name: iot-network
     driver: bridge
-  webservices_project_healthtrack-network:
+  healthtrack-network:
+    name: healthtrack-network
     driver: bridge
-  webservices_project_spring-network:
+  spring-network:
+    name: spring-network
     driver: bridge
-  webservices_project_frontend-network:
+  frontend-network:
+    name: frontend-network
     driver: bridge
 
 volumes:
@@ -34,7 +38,7 @@ services:
       INFLUX_ORG: my-org
       INFLUX_BUCKET: iot_data
     networks:
-      - webservices_project_iot-network
+      - iot-network
 
   device_db:
     image: postgres:15
@@ -49,7 +53,7 @@ services:
     volumes:
       - postgres_device_data:/var/lib/postgresql/data
     networks:
-      - webservices_project_iot-network
+      - iot-network
 
   influxdb:
     image: influxdb:2.6
@@ -66,7 +70,7 @@ services:
     volumes:
       - influxdb_data:/var/lib/influxdb2
     networks:
-      - webservices_project_iot-network
+      - iot-network
 
   # --- Profile ---
   mongodb:
@@ -79,7 +83,7 @@ services:
     volumes:
       - mongodb_data:/data/db
     networks:
-      - webservices_project_healthtrack-network
+      - healthtrack-network
 
   profile_service:
     build: ./profile
@@ -93,7 +97,7 @@ services:
     depends_on:
       - mongodb
     networks:
-      - webservices_project_healthtrack-network
+      - healthtrack-network
     volumes:
       - ./profile/src:/app/src
     command: npm run dev
@@ -111,7 +115,7 @@ services:
       - sqlserver_data:/var/opt/mssql
     restart: unless-stopped
     networks:
-      - webservices_project_spring-network
+      - spring-network
 
   planification_service:
     build: ./planification
@@ -128,7 +132,7 @@ services:
     command: sh -c "sleep 120 && java -jar app.jar"
     restart: unless-stopped
     networks:
-      - webservices_project_spring-network
+      - spring-network
 
   # --- Spring Boot Suivi Patients ---
   postgres_suivipatients:
@@ -144,7 +148,7 @@ services:
     volumes:
       - postgres_suivipatients_data:/var/lib/postgresql/data
     networks:
-      - webservices_project_spring-network
+      - spring-network
 
   suivipatients_service:
     build: ./suivitraitement
@@ -163,7 +167,7 @@ services:
       - "8002:8002"
     restart: always
     networks:
-      - webservices_project_spring-network
+      - spring-network
 
   # --- Frontend Nextjs ---
   frontend_service:
@@ -176,4 +180,4 @@ services:
       NODE_ENV: development
     restart: unless-stopped
     networks:
-      - webservices_project_frontend-network
+      - frontend-network
