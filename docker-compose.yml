@@ -19,16 +19,16 @@ volumes:
 
 services:
   # --- IoT Device App ---
-  device-app:
+  device_service:
     build: ./device
-    container_name: device-app
+    container_name: device_service
     ports:
       - "8000:8000"
     depends_on:
-      - db_device
+      - device_db
       - influxdb
     environment:
-      DATABASE_URL: postgresql://device_user:device_pass@db_device:5432/device_db
+      DATABASE_URL: postgresql://device_user:device_pass@device_db:5432/device_db
       INFLUX_URL: http://influxdb:8086
       INFLUX_TOKEN: my-token
       INFLUX_ORG: my-org
@@ -36,9 +36,9 @@ services:
     networks:
       - iot-network
 
-  db_device:
+  device_db:
     image: postgres:15
-    container_name: device-db
+    container_name: device_db
     restart: always
     environment:
       POSTGRES_USER: device_user
@@ -71,7 +71,7 @@ services:
   # --- Profile ---
   mongodb:
     image: mongo:6
-    container_name: healthtrack-mongo
+    container_name: profile_mongo
     ports:
       - "27017:27017"
     environment:
@@ -81,9 +81,9 @@ services:
     networks:
       - healthtrack-network
 
-  profile-service:
+  profile_service:
     build: ./profile
-    container_name: healthtrack-profile-service
+    container_name: profile_service
     ports:
       - "3000:3000"
     environment:
@@ -146,9 +146,9 @@ services:
     networks:
       - spring-network
 
-  suivipatients_app:
+  suivipatients_service:
     build: ./suivitraitement
-    container_name: suivipatients_app
+    container_name: suivipatients_service
     depends_on:
       - postgres_suivipatients
     environment:
@@ -166,7 +166,7 @@ services:
       - spring-network
 
   # --- Frontend Nextjs ---
-  frontend:
+  frontend_service:
     build:
       context: ./frontend
       dockerfile: Dockerfile
@@ -176,15 +176,7 @@ services:
       NODE_ENV: production
     restart: unless-stopped
     healthcheck:
-      test:
-        [
-          "CMD",
-          "wget",
-          "--quiet",
-          "--tries=1",
-          "--spider",
-          "http://localhost:3000/api/ping",
-        ]
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
       interval: 10s
       timeout: 5s
       retries: 5
