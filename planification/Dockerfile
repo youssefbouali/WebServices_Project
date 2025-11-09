@@ -8,6 +8,9 @@ RUN mvn clean package -DskipTests
 # Étape 2 : Image runtime légère avec JRE 21
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
+
+# COPIE LE JAR DEPUIS LE STAGE 'build'
+COPY --from=build /app/target/planification-0.0.1-SNAPSHOT.jar app.jar
+
 EXPOSE 8082
-ENTRYPOINT ["java", "-jar", "/app.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]

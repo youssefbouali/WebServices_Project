@@ -22,8 +22,7 @@ public class Planification {
     @Column(nullable = false)
     private Integer doctorId; // Référence au docteur (de Profile)
 
-    @Column(nullable = false)
-    @Temporal(TemporalType.DATE)
+    @Column(name = "date_rdv", nullable = false)
     private LocalDateTime dateRdv; // Date du rendez-vous (utilisez LocalDateTime pour datetime)
 
     @Column(length = 50)
