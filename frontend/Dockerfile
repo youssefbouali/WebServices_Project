@@ -1,25 +1,22 @@
 # Use Node 21
 FROM node:21-alpine
 
-# Set working directory
 WORKDIR /app
 
-# Install pnpm
 RUN npm install -g pnpm@10.14.0
 
 RUN apk add --no-cache bash git build-base python3
 
-# Copy package files
 COPY pnpm-lock.yaml package.json ./
-
-# Install all dependencies
 RUN pnpm install --frozen-lockfile
 
-# Copy the full source code
 COPY . .
+
+# Build production client + server
+RUN npm run build
 
 # Expose port
 EXPOSE 8080
 
-# Start the application directly
-CMD ["npm", "run", "dev"]
+# Serve production build
+CMD ["npm", "run", "start"]
