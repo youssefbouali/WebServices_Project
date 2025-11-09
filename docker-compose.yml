@@ -103,7 +103,7 @@ services:
     command: npm run dev
 
   # --- Spring Boot with SQL Server ---
-  db_sql:
+  db:
     image: mcr.microsoft.com/mssql/server:2019-latest
     environment:
       SA_PASSWORD: "P@ssw0rd1234"
@@ -122,9 +122,9 @@ services:
     ports:
       - "8082:8080"
     depends_on:
-      - db_sql
+      - db
     environment:
-      SPRING_DATASOURCE_URL: jdbc:sqlserver://db_sql:1433;databaseName=master;encrypt=true;trustServerCertificate=true;
+      SPRING_DATASOURCE_URL: jdbc:sqlserver://db:1433;databaseName=master;encrypt=true;trustServerCertificate=true;
       SPRING_DATASOURCE_USERNAME: sa
       SPRING_DATASOURCE_PASSWORD: P@ssw0rd1234
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
@@ -135,9 +135,9 @@ services:
       - spring-network
 
   # --- Spring Boot Suivi Patients ---
-  postgres_suivipatients:
+  postgres:
     image: postgres:17
-    container_name: postgres_suivipatients
+    container_name: postgres
     restart: always
     environment:
       POSTGRES_DB: suivipatients
@@ -154,9 +154,9 @@ services:
     build: ./suivitraitement
     container_name: suivipatients_service
     depends_on:
-      - postgres_suivipatients
+      - postgres
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres_suivipatients:5432/suivi_traitement
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/suivi_traitement
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: admin1234
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
