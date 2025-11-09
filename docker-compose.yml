@@ -70,7 +70,7 @@ services:
 
   # --- Profile ---
   mongodb:
-    image: mongo:6
+    image: mongo:4.4
     container_name: profile_mongo
     ports:
       - "27017:27017"
