@@ -10,8 +10,8 @@ networks:
   planification-network:
     name: planification-network
     driver: bridge
-  suivipatients-network:
-    name: suivipatients-network
+  suivitraitement-network:
+    name: suivitraitement-network
     driver: bridge
   frontend-network:
     name: frontend-network
@@ -22,7 +22,7 @@ volumes:
   influxdb_data:
   mongodb_data:
   sqlserver_data:
-  postgres_suivipatients_data:
+  postgres_suivitraitement_data:
 
 services:
   # --- IoT Device App ---
@@ -143,19 +143,19 @@ services:
     container_name: postgres
     restart: always
     environment:
-      POSTGRES_DB: suivipatients
+      POSTGRES_DB: suivi_traitement
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: admin1234
     ports:
       - "5434:5432"
     volumes:
-      - postgres_suivipatients_data:/var/lib/postgresql/data
+      - postgres_suivitraitement_data:/var/lib/postgresql/data
     networks:
-      - suivipatients-network
+      - suivitraitement-network
 
-  suivipatients_service:
+  suivitraitement_service:
     build: ./suivitraitement
-    container_name: suivipatients_service
+    container_name: suivitraitement_service
     depends_on:
       - postgres
     environment:
@@ -170,7 +170,7 @@ services:
       - "8002:8002"
     restart: always
     networks:
-      - suivipatients-network
+      - suivitraitement-network
 
   # --- Frontend Nextjs ---
   frontend_service:
