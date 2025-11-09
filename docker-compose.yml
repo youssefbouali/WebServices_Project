@@ -95,7 +95,7 @@ services:
     networks:
       - healthtrack-network
     volumes:
-      - ./src:/app/src
+      - ./profile/src:/app/src
     command: npm run dev
 
   # --- Spring Boot with SQL Server ---
