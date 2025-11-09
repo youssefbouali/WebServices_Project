@@ -1,23 +1,17 @@
 # Use Node 21
 FROM node:21-alpine
 
-# Set working directory
 WORKDIR /app
 
-# Install pnpm
 RUN npm install -g pnpm@10.14.0
 
-# Copy package files
 COPY pnpm-lock.yaml package.json ./
-
-# Install all dependencies
 RUN pnpm install --frozen-lockfile
 
-# Copy the full source code
 COPY . .
 
-# Expose port
+RUN npm run build    # Build both client and server
+
 EXPOSE 8080
 
-# Start the application directly
-CMD ["npm", "run", "dev"]
+CMD ["npm", "run", "start"]   # Serve built server
