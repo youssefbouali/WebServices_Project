@@ -12,4 +12,4 @@ COPY wait-for-db.sh ./wait-for-db.sh
 
 RUN chmod +x wait-for-db.sh
 
-CMD ["./wait-for-db.sh", "db", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["./wait-for-db.sh", "device_db", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
