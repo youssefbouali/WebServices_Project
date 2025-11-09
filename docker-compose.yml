@@ -1,0 +1,167 @@
+version: "3.9"
+
+services:
+  # ---------------- PostgreSQL + InfluxDB (device-app) ----------------
+  device-db:
+    image: postgres:15
+    container_name: device-db
+    restart: always
+    environment:
+      POSTGRES_USER: device_user
+      POSTGRES_PASSWORD: device_pass
+      POSTGRES_DB: device_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - device_postgres_data:/var/lib/postgresql/data
+    networks:
+      - device-network
+
+  influxdb:
+    image: influxdb:2.6
+    container_name: influxdb
+    ports:
+      - "8086:8086"
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: admin
+      DOCKER_INFLUXDB_INIT_PASSWORD: admin123
+      DOCKER_INFLUXDB_INIT_ORG: my-org
+      DOCKER_INFLUXDB_INIT_BUCKET: iot_data
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: my-token
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+    networks:
+      - device-network
+
+  device-app:
+    build: ./device
+    container_name: device-app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - device-db
+      - influxdb
+    environment:
+      DATABASE_URL: postgresql://device_user:device_pass@device-db:5432/device_db
+      INFLUX_URL: http://influxdb:8086
+      INFLUX_TOKEN: my-token
+      INFLUX_ORG: my-org
+      INFLUX_BUCKET: iot_data
+    networks:
+      - device-network
+
+  # ---------------- MongoDB + Node.js (healthtrack) ----------------
+  healthtrack-mongo:
+    image: mongo:6
+    container_name: healthtrack-mongo
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: healthtrack
+    volumes:
+      - healthtrack_mongo_data:/data/db
+    networks:
+      - healthtrack-network
+
+  profile-service:
+    build: ./frontend
+    container_name: healthtrack-profile-service
+    ports:
+      - "3000:3000"
+    environment:
+      MONGO_URL: mongodb://healthtrack-mongo:27017/healthtrack
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: 3000
+    depends_on:
+      - healthtrack-mongo
+    volumes:
+      - ./src:/app/src
+    command: npm run dev
+    networks:
+      - healthtrack-network
+
+  # ---------------- SQL Server + Spring Boot (planification) ----------------
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    container_name: sqlserver
+    environment:
+      SA_PASSWORD: "P@ssw0rd1234"
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Express"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    restart: unless-stopped
+    networks:
+      - planif-network
+
+  planification-app:
+    build: ./planification
+    ports:
+      - "8082:8080"
+    depends_on:
+      - sqlserver
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:sqlserver://sqlserver:1433;databaseName=master;encrypt=true;trustServerCertificate=true;
+      SPRING_DATASOURCE_USERNAME: sa
+      SPRING_DATASOURCE_PASSWORD: P@ssw0rd1234
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: "true"
+    command: sh -c "sleep 120 && java -jar app.jar"
+    restart: unless-stopped
+    networks:
+      - planif-network
+
+  # ---------------- PostgreSQL + Spring Boot (suivipatients) ----------------
+  postgres_suivipatients:
+    image: postgres:17
+    container_name: postgres_suivipatients
+    restart: always
+    environment:
+      POSTGRES_DB: suivipatients
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin1234
+    ports:
+      - "5434:5432"
+    volumes:
+      - suivipatients_postgres_data:/var/lib/postgresql/data
+    networks:
+      - suivipatients-network
+
+  suivipatients-app:
+    build: ./suivitraitement
+    container_name: suivipatients_app
+    depends_on:
+      - postgres_suivipatients
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres_suivipatients:5432/suivipatients
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: admin1234
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: "true"
+      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.PostgreSQLDialect
+      SERVER_PORT: 8002
+    ports:
+      - "8002:8002"
+    restart: always
+    networks:
+      - suivipatients-network
+
+volumes:
+  device_postgres_data:
+  influxdb_data:
+  healthtrack_mongo_data:
+  sqlserver_data:
+  suivipatients_postgres_data:
+
+networks:
+  device-network:
+    driver: bridge
+  healthtrack-network:
+    driver: bridge
+  planif-network:
+    driver: bridge
+  suivipatients-network:
+    driver: bridge

@@ -2,15 +2,14 @@
 
 ## Description
 
-HealthTrack est une application modulaire pour le **suivi médical des patients chroniques**.
-Elle permet de gérer :
+HealthTrack est une application modulaire pour le **suivi médical des patients chroniques**, permettant de gérer :
 
 * Profils utilisateurs (patients, médecins, administrateurs)
 * Appareils médicaux connectés (IoT)
 * Planification des rendez-vous
 * Suivi et rappels des traitements
 
-L’architecture est **multi-module**, chaque service étant indépendant et exposant des API REST sécurisées pour l’interopérabilité.
+L’architecture est **multi-module**, chaque service exposant des API REST sécurisées pour l’interopérabilité.
 
 ---
 
@@ -30,166 +29,166 @@ L’architecture est **multi-module**, chaque service étant indépendant et exp
 
 ## Modules et API
 
-### 1. Profile Module
+### 1. Profile Module ([http://localhost:3000](http://localhost:3000))
 
-* Gestion des utilisateurs et rôles
-* Endpoints principaux :
+**Gestion des utilisateurs et rôles**
 
-  * `POST /profiles` – Créer un profil
-  * `GET /profiles` – Lister les profils
-  * `GET /profiles/{id}` – Récupérer un profil
-  * `PUT /profiles/{id}` – Modifier un profil
-  * `DELETE /profiles/{id}` – Supprimer un profil
+#### Endpoints principaux
 
-### 2. Device Module
+| Méthode  | Endpoint                | Description                    |
+| -------- | ----------------------- | ------------------------------ |
+| `POST`   | `/auth/register`        | Créer un profil                |
+| `POST`   | `/auth/login`           | Authentifier un profil         |
+| `GET`    | `/profiles/me`          | Récupérer son profil actuel    |
+| `PUT`    | `/profiles/me`          | Mettre à jour son profil       |
+| `PUT`    | `/profiles/me/password` | Changer le mot de passe        |
+| `GET`    | `/profiles`             | Lister tous les profils        |
+| `GET`    | `/profiles/role/{role}` | Lister profils par rôle        |
+| `GET`    | `/profiles/{id}`        | Récupérer un profil par ID     |
+| `PUT`    | `/profiles/{id}`        | Mettre à jour un profil par ID |
+| `DELETE` | `/profiles/{id}`        | Supprimer un profil par ID     |
+| `GET`    | `/profiles/statistics`  | Statistiques sur les profils   |
 
-* Collecte et supervision des appareils connectés
-* Intégration avec InfluxDB pour stockage des mesures
-* Endpoints principaux :
-
-  * `POST /devices` – Ajouter un appareil
-  * `GET /devices` – Lister les appareils
-  * `GET /devices/{id}` – Détails d’un appareil
-  * `PUT /devices/{id}` – Mise à jour + enregistrement mesures
-  * `DELETE /devices/{id}` – Supprimer un appareil
-* CRUD direct sur les données InfluxDB via `write`, `query` et `delete`
-
-
-
-
-
-
-Configurer les variables d’environnement dans `config.py` ou `.env` :
-
-```python
-DATABASE_URL=postgresql://device_user:device_pass@db:5432/device_db
-INFLUX_URL=http://influxdb:8086
-INFLUX_TOKEN=my-token
-INFLUX_ORG=my-org
-INFLUX_BUCKET=iot_data
-```
-
-Lancer les services via Docker Compose :
-
-```bash
-docker-compose up --build
-```
-
-* PostgreSQL : `localhost:5433`
-* FastAPI : `http://localhost:8000`
-* InfluxDB : `http://localhost:8086`
-
----
-
-## Endpoints FastAPI
-
-### CRUD Appareils (Devices)
-
-| Méthode  | Endpoint               | Description                                            |
-| -------- | ---------------------- | ------------------------------------------------------ |
-| `POST`   | `/devices/`            | Créer un appareil                                      |
-| `GET`    | `/devices/`            | Lister tous les appareils                              |
-| `GET`    | `/devices/{device_id}` | Récupérer un appareil par ID                           |
-| `PUT`    | `/devices/{device_id}` | Mettre à jour un appareil et envoyer valeur à InfluxDB |
-| `DELETE` | `/devices/{device_id}` | Supprimer un appareil                                  |
-
-### Données IoT
-
-* Les mesures envoyées par les appareils sont automatiquement écrites dans InfluxDB via le endpoint `PUT /devices/{device_id}`.
-* Exemple de champ écrit : `device_measurement,device_id=3 value=25.5`
-
----
-
-## Exemple Postman
-
-### Écrire une mesure IoT directement sur InfluxDB
-
-**POST** : `http://localhost:8086/api/v2/write?org=my-org&bucket=iot_data&precision=s`
-**Headers** :
-
-```
-Authorization: Token my-token
-Content-Type: text/plain; charset=utf-8
-```
-
-**Body (raw text)** :
-
-```
-device_measurement,device_id=3 value=25.5
-```
-
-### Lire les mesures IoT
-
-**POST** : `http://localhost:8086/api/v2/query?org=my-org`
-**Headers** :
-
-```
-Authorization: Token my-token
-Content-Type: application/json
-```
-
-**Body** :
+Exemple `POST /auth/register` :
 
 ```json
 {
+  "email": "john.doe@example.com",
+  "firstName": "John",
+  "lastName": "Doe",
+  "role": "PATIENT",
+  "phone": "0612345678",
+  "maladieChronique": "Diabetes",
+  "passwordHash": "password123"
+}
+```
+
+Réponse :
+
+```json
+{
+  "profile": {
+    "id": "64f7c2e1a1b2c3d4e5f6a7b8",
+    "email": "john.doe@example.com",
+    "firstName": "John",
+    "lastName": "Doe",
+    "role": "PATIENT",
+    "phone": "0612345678",
+    "maladieChronique": "Diabetes",
+    "isActive": true,
+    "createdAt": "2025-11-06T23:00:00.000Z",
+    "updatedAt": "2025-11-06T23:00:00.000Z"
+  },
+  "token": "jwt.token.here"
+}
+```
+
+---
+
+### 2. Device Module ([http://localhost:8000](http://localhost:8000))
+
+**Collecte et supervision des appareils connectés**
+
+#### Endpoints principaux
+
+| Méthode  | Endpoint        | Description                          |
+| -------- | --------------- | ------------------------------------ |
+| `POST`   | `/devices`      | Ajouter un appareil                  |
+| `GET`    | `/devices`      | Lister tous les appareils            |
+| `GET`    | `/devices/{id}` | Détails d’un appareil                |
+| `PUT`    | `/devices/{id}` | Mise à jour + enregistrement mesures |
+| `DELETE` | `/devices/{id}` | Supprimer un appareil                |
+
+#### Données IoT (InfluxDB)
+
+* **Écrire une mesure** :
+
+```
+POST http://localhost:8086/api/v2/write?org=my-org&bucket=iot_data&precision=s
+Headers: Authorization: Token my-token
+Body: device_measurement,device_id=3 value=25.5
+```
+
+* **Lire mesures** :
+
+```json
+POST http://localhost:8086/api/v2/query?org=my-org
+Headers: Authorization: Token my-token
+Body: {
   "query": "from(bucket:\"iot_data\") |> range(start: -1h) |> filter(fn: (r) => r._measurement == \"device_measurement\")"
 }
 ```
 
-
----
-
-## Supprimer des données IoT dans InfluxDB
-
-
-**POST** : `http://localhost:8086/api/v2/delete?org=my-org&bucket=iot_data`
-**Headers** :
-
-```
-Authorization: Token my-token
-Content-Type: application/json
-```
-
-**Body** :
+* **Supprimer mesures** :
 
 ```json
-{
+POST http://localhost:8086/api/v2/delete?org=my-org&bucket=iot_data
+Headers: Authorization: Token my-token
+Body: {
   "start": "1970-01-01T00:00:00Z",
   "stop": "2025-10-29T23:59:59Z",
   "predicate": "_measurement=\"device_measurement\" AND device_id='3'"
 }
 ```
 
-> Explication :
->
-> * `start` et `stop` définissent la plage temporelle des données à supprimer.
-> * `predicate` permet de filtrer les points exacts à supprimer, ici pour `device_id=3`.
+---
+
+### 3. Planification Module ([http://localhost:8082](http://localhost:8082))
+
+**Gestion des rendez-vous**
+
+#### Endpoints principaux
+
+| Méthode | Endpoint                                                            | Description                        |
+| ------- | ------------------------------------------------------------------- | ---------------------------------- |
+| `POST`  | `/api/appointments/schedule`                                        | Planifier un rendez-vous           |
+| `GET`   | `/api/appointments/patient/{patientId}`                             | Liste des rendez-vous d’un patient |
+| `PUT`   | `/api/appointments/cancel/{rdvId}`                                  | Annuler un rendez-vous             |
+| `PUT`   | `/api/appointments/update/{rdvId}?nouvelleDate=YYYY-MM-DDTHH:MM:SS` | Modifier un rendez-vous            |
+
+Exemple `POST /api/appointments/schedule` :
+
+```json
+{
+  "patientId": 1,
+  "doctorId": 2,
+  "dateRdv": "2025-11-10T14:30:00"
+}
+```
 
 ---
 
+### 4. SuiviTraitement Module ([http://localhost:8002](http://localhost:8002))
 
+**Suivi des traitements médicaux et rappels**
 
+#### Endpoints principaux
 
+| Méthode  | Endpoint                         | Description                    |
+| -------- | -------------------------------- | ------------------------------ |
+| `POST`   | `/treatments`                    | Ajouter un traitement          |
+| `GET`    | `/treatments`                    | Lister tous les traitements    |
+| `GET`    | `/treatments?patientId={id}`     | Lister traitements par patient |
+| `GET`    | `/treatments/active`             | Lister traitements actifs      |
+| `PUT`    | `/treatments/{id}`               | Mettre à jour un traitement    |
+| `DELETE` | `/treatments/{id}`               | Supprimer un traitement        |
+| `POST`   | `/treatments/{id}/validate-dose` | Valider une dose               |
+| `POST`   | `/treatments/{id}/send-reminder` | Envoyer un rappel              |
+| `GET`    | `/treatments/stats`              | Statistiques des traitements   |
 
-### 3. Planification Module
+Exemple `POST /treatments` :
 
-* Gestion des rendez-vous
-* Endpoints principaux :
-
-  * `POST /appointments` – Créer un rendez-vous
-  * `GET /appointments` – Lister tous les rendez-vous
-  * `PUT /appointments/{id}` – Modifier un rendez-vous
-  * `DELETE /appointments/{id}` – Supprimer un rendez-vous
-
-### 4. SuiviTraitement Module
-
-* Suivi des traitements médicaux et rappels
-* Endpoints principaux :
-
-  * `POST /treatments` – Ajouter un traitement
-  * `GET /treatments` – Lister les traitements
-  * `PUT /treatments/{id}` – Mettre à jour un traitement
-  * `DELETE /treatments/{id}` – Supprimer un traitement
+```json
+{
+  "patientId": 1,
+  "medicament": "Paracetamol",
+  "dosage": "500mg",
+  "frequence": "Twice a day",
+  "dateDebut": "2025-11-06T09:00:00",
+  "dateFin": "2025-11-10T09:00:00",
+  "instructions": "Take after meals"
+}
+```
 
 ---
 
@@ -229,18 +228,18 @@ POSTGRES_URL=postgresql://user:pass@db:5432/healthtrack
 POSTGRES_URL=postgresql://user:pass@db:5432/healthtrack
 ```
 
-3. Lancer les services via Docker Compose :
+3. Lancer les services :
 
 ```bash
 docker-compose up --build
 ```
 
-* Profile (Node.js) → `http://localhost:3000`
-* MongoDB → `mongodb://localhost:27017`
-* Device (FastAPI) → `http://localhost:8000`
+* Profile → `http://localhost:3000`
+* Device → `http://localhost:8000`
 * InfluxDB → `http://localhost:8086`
-* Planification (Java Spring Boot) → `http://localhost:8080`
-* SuiviTraitement (Java Spring Boot) → `http://localhost:8002`
+* Planification → `http://localhost:8082`
+* SuiviTraitement → `http://localhost:8002`
+
 
 
 ```mermaid
