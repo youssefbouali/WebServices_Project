@@ -1,8 +1,42 @@
 version: "3.9"
 
+networks:
+  iot-network:
+    driver: bridge
+  healthtrack-network:
+    driver: bridge
+  spring-network:
+    driver: bridge
+  frontend-network:
+    driver: bridge
+
+volumes:
+  postgres_device_data:
+  influxdb_data:
+  mongodb_data:
+  sqlserver_data:
+  postgres_suivipatients_data:
+
 services:
-  # ---------------- PostgreSQL + InfluxDB (device-app) ----------------
-  device-db:
+  # --- IoT Device App ---
+  device-app:
+    build: ./device
+    container_name: device-app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db_device
+      - influxdb
+    environment:
+      DATABASE_URL: postgresql://device_user:device_pass@db_device:5432/device_db
+      INFLUX_URL: http://influxdb:8086
+      INFLUX_TOKEN: my-token
+      INFLUX_ORG: my-org
+      INFLUX_BUCKET: iot_data
+    networks:
+      - iot-network
+
+  db_device:
     image: postgres:15
     container_name: device-db
     restart: always
@@ -13,9 +47,9 @@ services:
     ports:
       - "5433:5432"
     volumes:
-      - device_postgres_data:/var/lib/postgresql/data
+      - postgres_device_data:/var/lib/postgresql/data
     networks:
-      - device-network
+      - iot-network
 
   influxdb:
     image: influxdb:2.6
@@ -32,27 +66,10 @@ services:
     volumes:
       - influxdb_data:/var/lib/influxdb2
     networks:
-      - device-network
+      - iot-network
 
-  device-app:
-    build: ./device
-    container_name: device-app
-    ports:
-      - "8000:8000"
-    depends_on:
-      - device-db
-      - influxdb
-    environment:
-      DATABASE_URL: postgresql://device_user:device_pass@device-db:5432/device_db
-      INFLUX_URL: http://influxdb:8086
-      INFLUX_TOKEN: my-token
-      INFLUX_ORG: my-org
-      INFLUX_BUCKET: iot_data
-    networks:
-      - device-network
-
-  # ---------------- MongoDB + Node.js (healthtrack) ----------------
-  healthtrack-mongo:
+  # --- Profile ---
+  mongodb:
     image: mongo:6
     container_name: healthtrack-mongo
     ports:
@@ -60,31 +77,30 @@ services:
     environment:
       MONGO_INITDB_DATABASE: healthtrack
     volumes:
-      - healthtrack_mongo_data:/data/db
+      - mongodb_data:/data/db
     networks:
       - healthtrack-network
 
   profile-service:
-    build: ./frontend
+    build: ./profile
     container_name: healthtrack-profile-service
     ports:
       - "3000:3000"
     environment:
-      MONGO_URL: mongodb://healthtrack-mongo:27017/healthtrack
+      MONGO_URL: mongodb://mongodb:27017/healthtrack
       JWT_SECRET: ${JWT_SECRET}
       PORT: 3000
     depends_on:
-      - healthtrack-mongo
+      - mongodb
+    networks:
+      - healthtrack-network
     volumes:
       - ./src:/app/src
     command: npm run dev
-    networks:
-      - healthtrack-network
 
-  # ---------------- SQL Server + Spring Boot (planification) ----------------
-  sqlserver:
+  # --- Spring Boot with SQL Server ---
+  db_sql:
     image: mcr.microsoft.com/mssql/server:2019-latest
-    container_name: sqlserver
     environment:
       SA_PASSWORD: "P@ssw0rd1234"
       ACCEPT_EULA: "Y"
@@ -95,16 +111,16 @@ services:
       - sqlserver_data:/var/opt/mssql
     restart: unless-stopped
     networks:
-      - planif-network
+      - spring-network
 
-  planification-app:
+  app_sql:
     build: ./planification
     ports:
       - "8082:8080"
     depends_on:
-      - sqlserver
+      - db_sql
     environment:
-      SPRING_DATASOURCE_URL: jdbc:sqlserver://sqlserver:1433;databaseName=master;encrypt=true;trustServerCertificate=true;
+      SPRING_DATASOURCE_URL: jdbc:sqlserver://db_sql:1433;databaseName=master;encrypt=true;trustServerCertificate=true;
       SPRING_DATASOURCE_USERNAME: sa
       SPRING_DATASOURCE_PASSWORD: P@ssw0rd1234
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
@@ -112,9 +128,9 @@ services:
     command: sh -c "sleep 120 && java -jar app.jar"
     restart: unless-stopped
     networks:
-      - planif-network
+      - spring-network
 
-  # ---------------- PostgreSQL + Spring Boot (suivipatients) ----------------
+  # --- Spring Boot Suivi Patients ---
   postgres_suivipatients:
     image: postgres:17
     container_name: postgres_suivipatients
@@ -126,17 +142,17 @@ services:
     ports:
       - "5434:5432"
     volumes:
-      - suivipatients_postgres_data:/var/lib/postgresql/data
+      - postgres_suivipatients_data:/var/lib/postgresql/data
     networks:
-      - suivipatients-network
+      - spring-network
 
-  suivipatients-app:
+  suivipatients_app:
     build: ./suivitraitement
     container_name: suivipatients_app
     depends_on:
       - postgres_suivipatients
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres_suivipatients:5432/suivipatients
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres_suivipatients:5432/suivi_traitement
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: admin1234
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
@@ -147,21 +163,31 @@ services:
       - "8002:8002"
     restart: always
     networks:
-      - suivipatients-network
+      - spring-network
 
-volumes:
-  device_postgres_data:
-  influxdb_data:
-  healthtrack_mongo_data:
-  sqlserver_data:
-  suivipatients_postgres_data:
-
-networks:
-  device-network:
-    driver: bridge
-  healthtrack-network:
-    driver: bridge
-  planif-network:
-    driver: bridge
-  suivipatients-network:
-    driver: bridge
+  # --- Frontend Nextjs ---
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5000:3000"
+    environment:
+      NODE_ENV: production
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3000/api/ping",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - frontend-network
