@@ -19,7 +19,7 @@ L’architecture est **multi-module**, chaque service exposant des API REST séc
 | -------------------- | ----------------------- | ----------------------------------- |
 | **Device**           | Python + FastAPI        | InfluxDB (Time-series) / PostgreSQL |
 | **Profile**          | Node.js + Express.js    | MongoDB                             |
-| **Planification**    | Java + Spring Boot      | PostgreSQL                          |
+| **Planification**    | Java + Spring Boot      | SQLServer                           |
 | **SuiviTraitement**  | Java + Spring Boot      | PostgreSQL                          |
 | **Conteneurisation** | Docker & Docker Compose | –                                   |
 
@@ -915,7 +915,10 @@ INFLUX_ORG=my-org
 INFLUX_BUCKET=iot_data
 POSTGRES_URL=postgresql://user:pass@db:5432/healthtrack
 
-# Planification & SuiviTraitement
+# Planification
+SPRING_DATASOURCE_URL: jdbc:sqlserver://db:1433;databaseName=master;encrypt=true;trustServerCertificate=true;
+
+# SuiviTraitement
 POSTGRES_URL=postgresql://user:pass@db:5432/healthtrack
 ```
 
