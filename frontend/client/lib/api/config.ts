@@ -3,10 +3,10 @@
  */
 
 export const API_BASE_URLS = {
-  PROFILES: "http://localhost:3000",
-  DEVICES: "http://localhost:8000",
-  APPOINTMENTS: "http://localhost:8082",
-  TREATMENTS: "http://localhost:8002",
+  PROFILES: import.meta.env.VITE_PROFILES ?? "http://localhost:3000",
+  DEVICES: import.meta.env.VITE_DEVICES ?? "http://localhost:8000",
+  APPOINTMENTS: import.meta.env.VITE_APPOINTMENTS ?? "http://localhost:8082",
+  TREATMENTS: import.meta.env.VITE_TREATMENTS ?? "http://localhost:8002",
 };
 
 export interface ApiError {
