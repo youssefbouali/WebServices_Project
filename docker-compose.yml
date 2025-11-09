@@ -1,13 +1,13 @@
 version: "3.9"
 
 networks:
-  iot-network:
+  webservices_project_iot-network:
     driver: bridge
-  healthtrack-network:
+  webservices_project_healthtrack-network:
     driver: bridge
-  spring-network:
+  webservices_project_spring-network:
     driver: bridge
-  frontend-network:
+  webservices_project_frontend-network:
     driver: bridge
 
 volumes:
@@ -34,7 +34,7 @@ services:
       INFLUX_ORG: my-org
       INFLUX_BUCKET: iot_data
     networks:
-      - iot-network
+      - webservices_project_iot-network
 
   device_db:
     image: postgres:15
@@ -49,7 +49,7 @@ services:
     volumes:
       - postgres_device_data:/var/lib/postgresql/data
     networks:
-      - iot-network
+      - webservices_project_iot-network
 
   influxdb:
     image: influxdb:2.6
@@ -66,7 +66,7 @@ services:
     volumes:
       - influxdb_data:/var/lib/influxdb2
     networks:
-      - iot-network
+      - webservices_project_iot-network
 
   # --- Profile ---
   mongodb:
@@ -79,7 +79,7 @@ services:
     volumes:
       - mongodb_data:/data/db
     networks:
-      - healthtrack-network
+      - webservices_project_healthtrack-network
 
   profile_service:
     build: ./profile
@@ -93,7 +93,7 @@ services:
     depends_on:
       - mongodb
     networks:
-      - healthtrack-network
+      - webservices_project_healthtrack-network
     volumes:
       - ./profile/src:/app/src
     command: npm run dev
@@ -111,7 +111,7 @@ services:
       - sqlserver_data:/var/opt/mssql
     restart: unless-stopped
     networks:
-      - spring-network
+      - webservices_project_spring-network
 
   planification_service:
     build: ./planification
@@ -128,7 +128,7 @@ services:
     command: sh -c "sleep 120 && java -jar app.jar"
     restart: unless-stopped
     networks:
-      - spring-network
+      - webservices_project_spring-network
 
   # --- Spring Boot Suivi Patients ---
   postgres_suivipatients:
@@ -144,7 +144,7 @@ services:
     volumes:
       - postgres_suivipatients_data:/var/lib/postgresql/data
     networks:
-      - spring-network
+      - webservices_project_spring-network
 
   suivipatients_service:
     build: ./suivitraitement
@@ -163,7 +163,7 @@ services:
       - "8002:8002"
     restart: always
     networks:
-      - spring-network
+      - webservices_project_spring-network
 
   # --- Frontend Nextjs ---
   frontend_service:
@@ -176,4 +176,4 @@ services:
       NODE_ENV: development
     restart: unless-stopped
     networks:
-      - frontend-network
+      - webservices_project_frontend-network
