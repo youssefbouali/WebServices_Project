@@ -9,8 +9,8 @@ class DeviceCreate(DeviceBase):
     pass
 
 class DeviceUpdate(BaseModel):
-    name: str
-    type: str
+    name: str | None = None
+    type: str | None = None
     status: str | None = None
     last_value: float | None = None
 
