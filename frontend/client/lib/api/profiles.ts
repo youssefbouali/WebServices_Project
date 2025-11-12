@@ -1,4 +1,5 @@
 import { API_BASE_URLS, apiFetch } from "./config";
+const BASE = `${API_BASE_URLS.PROFILES}/api/profiles`;
 
 export interface Profile {
   id: string;
@@ -20,7 +21,7 @@ export interface RegisterRequest {
   role: "PATIENT" | "DOCTOR" | "ADMIN";
   phone: string;
   maladieChronique?: string;
-  passwordHash: string;
+  password: string;
 }
 
 export interface RegisterResponse {
@@ -59,20 +60,17 @@ export interface ProfileStatistics {
 export async function registerProfile(
   data: RegisterRequest,
 ): Promise<RegisterResponse> {
-  return apiFetch<RegisterResponse>(
-    `${API_BASE_URLS.PROFILES}/profiles/register`,
-    {
-      method: "POST",
-      body: JSON.stringify(data),
-    },
-  );
+  return apiFetch<RegisterResponse>(`${BASE}/auth/register`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
 }
 
 /**
  * Login with email and password
  */
 export async function loginProfile(data: LoginRequest): Promise<LoginResponse> {
-  return apiFetch<LoginResponse>(`${API_BASE_URLS.PROFILES}/profiles/login`, {
+  return apiFetch<LoginResponse>(`${BASE}/auth/login`, {
     method: "POST",
     body: JSON.stringify(data),
   });
@@ -82,7 +80,7 @@ export async function loginProfile(data: LoginRequest): Promise<LoginResponse> {
  * Get current profile (requires auth token)
  */
 export async function getCurrentProfile(): Promise<Profile> {
-  return apiFetch<Profile>(`${API_BASE_URLS.PROFILES}/profiles/me`, {
+  return apiFetch<Profile>(`${BASE}/me`, {
     method: "GET",
   });
 }
@@ -93,7 +91,7 @@ export async function getCurrentProfile(): Promise<Profile> {
 export async function updateCurrentProfile(
   data: Partial<Profile>,
 ): Promise<Profile> {
-  return apiFetch<Profile>(`${API_BASE_URLS.PROFILES}/profiles/me`, {
+  return apiFetch<Profile>(`${BASE}/me`, {
     method: "PUT",
     body: JSON.stringify(data),
   });
@@ -105,13 +103,10 @@ export async function updateCurrentProfile(
 export async function changePassword(
   data: ChangePasswordRequest,
 ): Promise<{ message: string }> {
-  return apiFetch<{ message: string }>(
-    `${API_BASE_URLS.PROFILES}/profiles/me/password`,
-    {
-      method: "PUT",
-      body: JSON.stringify(data),
-    },
-  );
+  return apiFetch<{ message: string }>(`${BASE}/me/password`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
 }
 
 /**
@@ -127,9 +122,7 @@ export async function listProfiles(params?: {
     queryString.append("isActive", params.isActive.toString());
 
   const query = queryString.toString();
-  const url = query
-    ? `${API_BASE_URLS.PROFILES}/profiles?${query}`
-    : `${API_BASE_URLS.PROFILES}/profiles`;
+  const url = query ? `${BASE}?${query}` : `${BASE}`;
 
   return apiFetch<Profile[]>(url, {
     method: "GET",
@@ -142,19 +135,16 @@ export async function listProfiles(params?: {
 export async function listProfilesByRole(
   role: "PATIENT" | "DOCTOR" | "ADMIN",
 ): Promise<Profile[]> {
-  return apiFetch<Profile[]>(
-    `${API_BASE_URLS.PROFILES}/profiles/role/${role}`,
-    {
-      method: "GET",
-    },
-  );
+  return apiFetch<Profile[]>(`${BASE}?role=${encodeURIComponent(role)}`, {
+    method: "GET",
+  });
 }
 
 /**
  * Get profile by ID
  */
 export async function getProfileById(id: string): Promise<Profile> {
-  return apiFetch<Profile>(`${API_BASE_URLS.PROFILES}/profiles/${id}`, {
+  return apiFetch<Profile>(`${BASE}/${id}`, {
     method: "GET",
   });
 }
@@ -166,7 +156,7 @@ export async function updateProfileById(
   id: string,
   data: Partial<Profile>,
 ): Promise<Profile> {
-  return apiFetch<Profile>(`${API_BASE_URLS.PROFILES}/profiles/${id}`, {
+  return apiFetch<Profile>(`${BASE}/${id}`, {
     method: "PUT",
     body: JSON.stringify(data),
   });
@@ -176,7 +166,7 @@ export async function updateProfileById(
  * Delete profile by ID
  */
 export async function deleteProfileById(id: string): Promise<void> {
-  return apiFetch<void>(`${API_BASE_URLS.PROFILES}/profiles/${id}`, {
+  return apiFetch<void>(`${BASE}/${id}`, {
     method: "DELETE",
   });
 }
@@ -185,10 +175,7 @@ export async function deleteProfileById(id: string): Promise<void> {
  * Get profile statistics
  */
 export async function getProfileStatistics(): Promise<ProfileStatistics> {
-  return apiFetch<ProfileStatistics>(
-    `${API_BASE_URLS.PROFILES}/profiles/statistics`,
-    {
-      method: "GET",
-    },
-  );
+  return apiFetch<ProfileStatistics>(`${BASE}/statistics`, {
+    method: "GET",
+  });
 }

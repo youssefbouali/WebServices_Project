@@ -42,7 +42,7 @@ export class Profile {
   @IsString()
   maladieChronique?: string;
 
-  // ✅ FIX: Remove select: false to allow password retrieval for validation
+ 
   @Column()
   @IsString()
   @MinLength(6)
@@ -50,7 +50,7 @@ export class Profile {
 
   @Column()
   @IsBoolean()
-  isActive!: boolean; // ✅ Make sure this is not optional
+  isActive!: boolean; 
 
   @CreateDateColumn()
   createdAt!: Date;

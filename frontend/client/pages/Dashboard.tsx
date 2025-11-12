@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useMemo, useState, useEffect } from "react";
+import { Link, useNavigate, Navigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Users,
@@ -13,7 +13,29 @@ import {
   MoreVertical,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
-import { listProfiles, Profile as ProfileType } from "@/lib/api/profiles";
+import {
+  listProfiles,
+  Profile as ProfileType,
+  registerProfile,
+  deleteProfileById,
+  getCurrentProfile,
+} from "@/lib/api/profiles";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface DisplayProfile {
   id: string;
@@ -30,6 +52,7 @@ interface DisplayProfile {
 export default function Dashboard() {
   const [activeFilter, setActiveFilter] = useState("Tous");
   const [profiles, setProfiles] = useState<DisplayProfile[]>([]);
+  const [rawProfiles, setRawProfiles] = useState<ProfileType[]>([]);
   const [stats, setStats] = useState({
     totalDocteurs: 0,
     totalPatients: 0,
@@ -39,6 +62,28 @@ export default function Dashboard() {
   const [error, setError] = useState("");
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [addOpen, setAddOpen] = useState(false);
+  const [addForm, setAddForm] = useState({
+    email: "",
+    firstName: "",
+    lastName: "",
+    role: "PATIENT" as ProfileType["role"],
+    phone: "",
+    maladieChronique: "",
+    password: "",
+  });
+  const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; profile: ProfileType | null }>({ open: false, profile: null });
+  const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
+
+  // Redirection basée sur le rôle: PATIENT -> /patient-dashboard, DOCTOR -> /doctor-dashboard
+  if (user?.role === "PATIENT") {
+    return <Navigate to="/patient-dashboard" replace />;
+  }
+  if (user?.role === "DOCTOR") {
+    return <Navigate to="/doctor-dashboard" replace />;
+  }
+  // ADMIN conserve le Dashboard actuel
 
   useEffect(() => {
     loadProfiles();
@@ -48,6 +93,13 @@ export default function Dashboard() {
     setIsLoading(true);
     setError("");
     try {
+      // identifier le profil courant (pour éviter suppression de soi-même)
+      try {
+        const me = await getCurrentProfile();
+        setCurrentProfileId(me.id);
+      } catch (_) {
+        // ignorer si non connecté
+      }
       let data: ProfileType[] = [];
 
       if (activeFilter === "Tous") {
@@ -58,7 +110,7 @@ export default function Dashboard() {
         data = await listProfiles({ role: "PATIENT" });
       }
 
-      const displayProfiles: DisplayProfile[] = data.map((profile) => ({
+      const toDisplay = (profile: ProfileType): DisplayProfile => ({
         id: profile.id,
         initials: (profile.firstName[0] + profile.lastName[0]).toUpperCase(),
         name: `${profile.firstName} ${profile.lastName}`,
@@ -75,8 +127,10 @@ export default function Dashboard() {
         statusColor: profile.isActive
           ? "bg-[#D1FAE5] text-[#10B981]"
           : "bg-[#FEE2E2] text-[#EF4444]",
-      }));
+      });
+      const displayProfiles: DisplayProfile[] = data.map(toDisplay);
 
+      setRawProfiles(data);
       setProfiles(displayProfiles);
 
       // Update stats
@@ -129,7 +183,108 @@ export default function Dashboard() {
     navigate("/");
   };
 
+  const filteredProfiles = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return profiles;
+    return profiles.filter((p) => {
+      return (
+        p.name.toLowerCase().includes(q) ||
+        p.email.toLowerCase().includes(q) ||
+        p.role.toLowerCase().includes(q) ||
+        p.status.toLowerCase().includes(q)
+      );
+    });
+  }, [profiles, searchQuery]);
+
+  async function handleAddSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    try {
+      const { profile } = await registerProfile(addForm);
+      setRawProfiles((prev) => [profile, ...prev]);
+      // remapper l’affichage
+      const toDisplay = (p: ProfileType): DisplayProfile => ({
+        id: p.id,
+        initials: (p.firstName[0] + p.lastName[0]).toUpperCase(),
+        name: `${p.firstName} ${p.lastName}`,
+        email: p.email,
+        role:
+          p.role === "DOCTOR" ? "Docteur" : p.role === "PATIENT" ? "Patient" : "Administrateur",
+        status: p.isActive ? "Actif" : "Inactif",
+        initialsColor: getInitialsColor(p.role),
+        roleColor: getRoleColor(p.role),
+        statusColor: p.isActive ? "bg-[#D1FAE5] text-[#10B981]" : "bg-[#FEE2E2] text-[#EF4444]",
+      });
+      setProfiles((prev) => [toDisplay(profile), ...prev]);
+      setAddOpen(false);
+      setAddForm({
+        email: "",
+        firstName: "",
+        lastName: "",
+        role: "PATIENT",
+        phone: "",
+        maladieChronique: "",
+        password: "",
+      });
+    } catch (err) {
+      const message = (err as any)?.message || "Échec d’ajout";
+      setError(message);
+    }
+  }
+
+  function requestDelete(p: ProfileType) {
+    setConfirmDelete({ open: true, profile: p });
+  }
+
+  async function handleDelete(id: string) {
+    try {
+      if (currentProfileId && id === currentProfileId) {
+        setError("Vous ne pouvez pas supprimer votre propre profil.");
+        return;
+      }
+      const before = rawProfiles.slice();
+      await deleteProfileById(id);
+      const next = before.filter((p) => p.id !== id);
+      setRawProfiles(next);
+      // remapper l’affichage
+      const toDisplay = (p: ProfileType): DisplayProfile => ({
+        id: p.id,
+        initials: (p.firstName[0] + p.lastName[0]).toUpperCase(),
+        name: `${p.firstName} ${p.lastName}`,
+        email: p.email,
+        role:
+          p.role === "DOCTOR" ? "Docteur" : p.role === "PATIENT" ? "Patient" : "Administrateur",
+        status: p.isActive ? "Actif" : "Inactif",
+        initialsColor: getInitialsColor(p.role),
+        roleColor: getRoleColor(p.role),
+        statusColor: p.isActive ? "bg-[#D1FAE5] text-[#10B981]" : "bg-[#FEE2E2] text-[#EF4444]",
+      });
+      setProfiles(next.map(toDisplay));
+    } catch (err) {
+      const message = (err as any)?.message || "Échec de suppression";
+      setError(message);
+      // restaurer si besoin
+      const restored = await listProfiles().catch(() => null);
+      if (restored) {
+        setRawProfiles(restored);
+        const toDisplay = (p: ProfileType): DisplayProfile => ({
+          id: p.id,
+          initials: (p.firstName[0] + p.lastName[0]).toUpperCase(),
+          name: `${p.firstName} ${p.lastName}`,
+          email: p.email,
+          role:
+            p.role === "DOCTOR" ? "Docteur" : p.role === "PATIENT" ? "Patient" : "Administrateur",
+          status: p.isActive ? "Actif" : "Inactif",
+          initialsColor: getInitialsColor(p.role),
+          roleColor: getRoleColor(p.role),
+          statusColor: p.isActive ? "bg-[#D1FAE5] text-[#10B981]" : "bg-[#FEE2E2] text-[#EF4444]",
+        });
+        setProfiles(restored.map(toDisplay));
+      }
+    }
+  }
+
   return (
+    <>
     <div className="flex flex-col lg:flex-row min-h-screen bg-[#F5F7FA]">
       {/* Sidebar */}
       <div className="w-full lg:w-[250px] bg-[#2563EB] flex flex-col">
@@ -291,6 +446,8 @@ export default function Dashboard() {
               <input
                 type="text"
                 placeholder="Rechercher un profil..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full h-10 pl-4 pr-10 bg-[#F8FAFC] border border-[#E2E8F0] rounded-md text-sm placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
               />
               <div className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 bg-[#2563EB] rounded-full flex items-center justify-center">
@@ -328,7 +485,10 @@ export default function Dashboard() {
             >
               Patients
             </button>
-            <button className="px-5 h-10 bg-[#10B981] text-white rounded-md text-[13px] flex items-center gap-2 hover:bg-[#059669] transition-colors">
+            <button
+              onClick={() => setAddOpen(true)}
+              className="px-5 h-10 bg-[#10B981] text-white rounded-md text-[13px] flex items-center gap-2 hover:bg-[#059669] transition-colors"
+            >
               <Plus className="w-4 h-4" />
               Ajouter
             </button>
@@ -374,7 +534,7 @@ export default function Dashboard() {
 
             {/* Table Body */}
             <div className="divide-y divide-[#E2E8F0]">
-              {profiles.map((profile) => (
+              {filteredProfiles.map((profile) => (
                 <div
                   key={profile.id}
                   className="px-4 lg:px-8 py-4 flex flex-col lg:grid lg:grid-cols-12 gap-2 lg:gap-4 items-start lg:items-center hover:bg-[#F8FAFC] transition-colors relative"
@@ -407,9 +567,26 @@ export default function Dashboard() {
                     </span>
                   </div>
                   <div className="lg:col-span-2 absolute top-4 right-4 lg:static">
-                    <button className="w-[30px] h-[30px] rounded-full bg-[#F8FAFC] border border-[#E2E8F0] flex items-center justify-center hover:bg-[#E2E8F0] transition-colors">
-                      <MoreVertical className="w-4 h-4 text-[#64748B]" />
-                    </button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="w-[30px] h-[30px] rounded-full bg-[#F8FAFC] border border-[#E2E8F0] flex items-center justify-center hover:bg-[#E2E8F0] transition-colors">
+                          <MoreVertical className="w-4 h-4 text-[#64748B]" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => navigate(`/profiles/detail?id=${encodeURIComponent(profile.id)}`)}>Voir</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => navigate(`/profiles/edit?id=${encodeURIComponent(profile.id)}`)}>Modifier</DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-red-600"
+                          onClick={() => {
+                            const p = rawProfiles.find((rp) => rp.id === profile.id);
+                            if (p) requestDelete(p);
+                          }}
+                        >
+                          Supprimer
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               ))}
@@ -437,5 +614,149 @@ export default function Dashboard() {
         </div>
       </div>
     </div>
+    
+    <Dialog open={confirmDelete.open} onOpenChange={(o) => setConfirmDelete({ open: o, profile: o ? confirmDelete.profile : null })}>
+      <DialogContent className="sm:max-w-[480px]">
+        <DialogHeader>
+          <DialogTitle>Confirmer la suppression</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <p className="text-sm text-[#1E293B]">Vous êtes sur le point de supprimer ce profil :</p>
+          {confirmDelete.profile && (
+            <div className="rounded-md border border-[#E2E8F0] p-3 bg-[#F8FAFC]">
+              <p className="text-[13px] text-[#1E293B] font-medium">{confirmDelete.profile.firstName} {confirmDelete.profile.lastName}</p>
+              <p className="text-[12px] text-[#64748B]">{confirmDelete.profile.email}</p>
+              <p className="text-[12px] text-[#64748B]">Rôle: {confirmDelete.profile.role}</p>
+            </div>
+          )}
+          <p className="text-[12px] text-[#DC2626]">Cette action est définitive. Elle ne peut pas être annulée.</p>
+        </div>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={() => setConfirmDelete({ open: false, profile: null })}>
+            Annuler
+          </Button>
+          <Button
+            type="button"
+            className="bg-[#EF4444] hover:bg-[#DC2626]"
+            onClick={() => {
+              if (confirmDelete.profile) {
+                handleDelete(confirmDelete.profile.id);
+              }
+              setConfirmDelete({ open: false, profile: null });
+            }}
+          >
+            Supprimer
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    
+    <AddProfileDialog
+      open={addOpen}
+      onOpenChange={setAddOpen}
+      onSubmit={handleAddSubmit}
+      form={addForm}
+      setForm={setAddForm}
+    />
+    </>
+  );
+}
+
+// Add Profile Dialog
+function AddProfileDialog({ open, onOpenChange, onSubmit, form, setForm }: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  onSubmit: (e: React.FormEvent) => Promise<void> | void;
+  form: {
+    email: string;
+    firstName: string;
+    lastName: string;
+    role: ProfileType["role"];
+    phone: string;
+    maladieChronique?: string;
+    password: string;
+  };
+  setForm: (f: any) => void;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader>
+          <DialogTitle>Ajouter un profil</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={onSubmit} className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Email</Label>
+              <Input
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                required
+              />
+            </div>
+            <div>
+              <Label>Téléphone</Label>
+              <Input
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Prénom</Label>
+              <Input
+                value={form.firstName}
+                onChange={(e) => setForm({ ...form, firstName: e.target.value })}
+                required
+              />
+            </div>
+            <div>
+              <Label>Nom</Label>
+              <Input
+                value={form.lastName}
+                onChange={(e) => setForm({ ...form, lastName: e.target.value })}
+                required
+              />
+            </div>
+            <div>
+              <Label>Rôle</Label>
+              <select
+                className="w-full h-9 border border-[#E2E8F0] rounded-md text-sm bg-white px-2"
+                value={form.role}
+                onChange={(e) => setForm({ ...form, role: e.target.value as ProfileType["role"] })}
+              >
+                <option value="PATIENT">PATIENT</option>
+                <option value="DOCTOR">DOCTOR</option>
+                <option value="ADMIN">ADMIN</option>
+              </select>
+            </div>
+            <div>
+              <Label>Maladie Chronique</Label>
+              <Input
+                value={form.maladieChronique ?? ""}
+                onChange={(e) => setForm({ ...form, maladieChronique: e.target.value })}
+              />
+            </div>
+          </div>
+          <div>
+            <Label>Mot de passe</Label>
+            <Input
+              type="password"
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              required
+            />
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Annuler
+            </Button>
+            <Button type="submit" className="bg-[#10B981] hover:bg-[#059669]">
+              Ajouter
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

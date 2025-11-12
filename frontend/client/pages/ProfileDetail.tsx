@@ -1,13 +1,44 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChevronLeft } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { getProfileById, updateProfileById, Profile } from "@/lib/api/profiles";
 
 export default function ProfileDetail() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("informations");
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const id = searchParams.get("id") || "";
+
+  useEffect(() => {
+    if (!id) {
+      toast({ description: "ID du profil manquant" });
+      navigate("/profiles");
+      return;
+    }
+    (async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const p = await getProfileById(id);
+        setProfile(p);
+      } catch (err) {
+        const message = (err as any)?.message || "Échec du chargement du profil";
+        setError(message);
+        toast({ description: message });
+      } finally {
+        setLoading(false);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   return (
     <div className="flex min-h-screen bg-[#F5F7FA]">
@@ -16,7 +47,7 @@ export default function ProfileDetail() {
         {/* Header */}
         <header className="bg-white border-b border-gray-200 h-16 lg:h-20 flex items-center justify-between px-4 lg:px-10">
           <h1 className="text-xl lg:text-2xl font-bold text-[#1E293B]">
-            Détail du Profil
+            {loading ? "Chargement..." : profile ? "Détail du Profil" : "Profil introuvable"}
           </h1>
           <div className="flex items-center gap-3 lg:gap-4">
             <span className="text-xs lg:text-sm text-[#64748B]">Admin</span>
@@ -62,31 +93,31 @@ export default function ProfileDetail() {
                   {/* Avatar */}
                   <div className="w-24 h-24 lg:w-[120px] lg:h-[120px] rounded-full bg-[#2563EB] flex items-center justify-center flex-shrink-0">
                     <span className="text-white text-3xl lg:text-4xl font-bold">
-                      SA
+                      {profile ? ((profile.firstName[0] + profile.lastName[0]).toUpperCase()) : "--"}
                     </span>
                   </div>
 
                   {/* Details */}
                   <div>
                     <h2 className="text-xl lg:text-2xl font-bold text-[#1E293B] mb-2">
-                      Dr. Sara Ahmed
+                      {profile ? `${profile.firstName} ${profile.lastName}` : "—"}
                     </h2>
                     <div className="flex flex-wrap items-center gap-2 mb-2 lg:mb-3">
                       <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#DBEAFE] text-[#2563EB] text-xs font-bold">
-                        Docteur
+                        {profile?.role ?? "—"}
                       </span>
                       <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-[#10B981]"></div>
-                        <span className="text-[#10B981] text-xs font-bold">
-                          Actif
+                        <div className={`w-2 h-2 rounded-full ${profile?.isActive ? "bg-[#10B981]" : "bg-[#EF4444]"}`}></div>
+                        <span className={`text-xs font-bold ${profile?.isActive ? "text-[#10B981]" : "text-[#EF4444]"}`}>
+                          {profile?.isActive ? "Actif" : "Inactif"}
                         </span>
                       </div>
                     </div>
                     <p className="text-sm text-[#64748B] mb-1">
-                      Email: sara.ahmed@health.ma
+                      Email: {profile?.email ?? "—"}
                     </p>
                     <p className="text-sm text-[#64748B]">
-                      Téléphone: +212 6XX XXX XXX
+                      Téléphone: {profile?.phone ?? "—"}
                     </p>
                   </div>
                 </div>
@@ -94,16 +125,26 @@ export default function ProfileDetail() {
                 {/* Action Buttons */}
                 <div className="flex flex-col gap-2 lg:gap-3 w-full lg:w-auto">
                   <Button
-                    onClick={() => navigate("/profiles/edit")}
+                    onClick={() => profile && navigate(`/profiles/edit?id=${encodeURIComponent(profile.id)}`)}
                     className="bg-[#2563EB] text-white hover:bg-[#1E40AF] h-10 text-sm font-bold w-full lg:w-[180px]"
                   >
                     Modifier le profil
                   </Button>
                   <Button
                     variant="outline"
+                    onClick={async () => {
+                      if (!profile) return;
+                      try {
+                        await updateProfileById(profile.id, { isActive: !profile.isActive });
+                        setProfile({ ...profile, isActive: !profile.isActive });
+                        toast({ description: profile.isActive ? "Profil désactivé" : "Profil activé" });
+                      } catch (err) {
+                        toast({ description: (err as any)?.message || "Échec de mise à jour de l'état" });
+                      }
+                    }}
                     className="h-10 border-[#E2E8F0] text-[#64748B] text-sm font-bold hover:bg-[#F8FAFC] w-full lg:w-[180px]"
                   >
-                    Désactiver
+                    {profile?.isActive ? "Désactiver" : "Activer"}
                   </Button>
                 </div>
               </div>
@@ -155,19 +196,19 @@ export default function ProfileDetail() {
                       <label className="block text-[13px] text-[#94A3B8] mb-1">
                         Nom complet
                       </label>
-                      <p className="text-sm text-[#1E293B]">Dr. Sara Ahmed</p>
+                      <p className="text-sm text-[#1E293B]">{profile ? `${profile.firstName} ${profile.lastName}` : "—"}</p>
                     </div>
                     <div>
                       <label className="block text-[13px] text-[#94A3B8] mb-1">
                         Date de naissance
                       </label>
-                      <p className="text-sm text-[#1E293B]">15/03/1985</p>
+                      <p className="text-sm text-[#1E293B]">—</p>
                     </div>
                     <div>
                       <label className="block text-[13px] text-[#94A3B8] mb-1">
                         Sexe
                       </label>
-                      <p className="text-sm text-[#1E293B]">Féminin</p>
+                      <p className="text-sm text-[#1E293B]">—</p>
                     </div>
                   </div>
                 </div>
@@ -182,19 +223,19 @@ export default function ProfileDetail() {
                       <label className="block text-[13px] text-[#94A3B8] mb-1">
                         Spécialité
                       </label>
-                      <p className="text-sm text-[#1E293B]">Cardiologie</p>
+                      <p className="text-sm text-[#1E293B]">—</p>
                     </div>
                     <div>
                       <label className="block text-[13px] text-[#94A3B8] mb-1">
                         Numéro d'inscription
                       </label>
-                      <p className="text-sm text-[#1E293B]">INPE-12345</p>
+                      <p className="text-sm text-[#1E293B]">—</p>
                     </div>
                     <div>
                       <label className="block text-[13px] text-[#94A3B8] mb-1">
                         Années d'expérience
                       </label>
-                      <p className="text-sm text-[#1E293B]">12 ans</p>
+                      <p className="text-sm text-[#1E293B]">—</p>
                     </div>
                   </div>
                 </div>
@@ -209,20 +250,20 @@ export default function ProfileDetail() {
                       <label className="block text-[13px] text-[#94A3B8] mb-1">
                         Date de création
                       </label>
-                      <p className="text-sm text-[#1E293B]">12/01/2024</p>
+                      <p className="text-sm text-[#1E293B]">{profile ? new Date(profile.createdAt).toLocaleDateString() : "—"}</p>
                     </div>
                     <div>
                       <label className="block text-[13px] text-[#94A3B8] mb-1">
                         Dernière connexion
                       </label>
-                      <p className="text-sm text-[#1E293B]">22/10/2025 14:32</p>
+                      <p className="text-sm text-[#1E293B]">—</p>
                     </div>
                     <div>
                       <label className="block text-[13px] text-[#94A3B8] mb-1">
                         Patients associés
                       </label>
                       <p className="text-sm text-[#2563EB] font-bold">
-                        24 patients
+                        —
                       </p>
                     </div>
                   </div>

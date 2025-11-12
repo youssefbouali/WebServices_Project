@@ -26,6 +26,13 @@ import TreatmentAlerts from "./pages/TreatmentAlerts";
 import RolesManagement from "./pages/RolesManagement";
 import DoctorDashboard from "./pages/DoctorDashboard";
 import PatientDashboard from "./pages/PatientDashboard";
+import PatientAppointments from "./pages/PatientAppointments";
+import PatientAlerts from "./pages/PatientAlerts";
+import PatientTreatmentTracking from "./pages/PatientTreatmentTracking";
+import DoctorPatients from "./pages/DoctorPatients";
+import DoctorAppointments from "./pages/DoctorAppointments";
+import DoctorAlerts from "./pages/DoctorAlerts";
+import DoctorTreatmentTracking from "./pages/DoctorTreatmentTracking";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -161,10 +168,66 @@ const Root = () => (
               }
             />
             <Route
+              path="/doctor/mes-patients"
+              element={
+                <ProtectedRoute>
+                  <DoctorPatients />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/doctor/rendez-vous"
+              element={
+                <ProtectedRoute>
+                  <DoctorAppointments />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/doctor/alertes"
+              element={
+                <ProtectedRoute>
+                  <DoctorAlerts />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/doctor/suivi-traitements"
+              element={
+                <ProtectedRoute>
+                  <DoctorTreatmentTracking />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/patient-dashboard"
               element={
                 <ProtectedRoute>
                   <PatientDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/patient/rendez-vous"
+              element={
+                <ProtectedRoute>
+                  <PatientAppointments />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/patient/alertes"
+              element={
+                <ProtectedRoute>
+                  <PatientAlerts />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/patient/suivi-traitements"
+              element={
+                <ProtectedRoute>
+                  <PatientTreatmentTracking />
                 </ProtectedRoute>
               }
             />

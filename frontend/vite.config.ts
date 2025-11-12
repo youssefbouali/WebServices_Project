@@ -10,7 +10,13 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
 	allowedHosts: ["eduapp.mywire.org", "localhost"],
     fs: {
-      allow: ["./client", "./shared"],
+      allow: [
+        // Allow standard app sources
+        path.resolve(__dirname, "./client"),
+        path.resolve(__dirname, "./shared"),
+        // Allow project root so Vite can serve index.html
+        path.resolve(__dirname, "."),
+      ],
       deny: [".env", ".env.*", "*.{crt,pem}", "**/.git/**", "server/**"],
     },
   },

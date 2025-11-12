@@ -1,5 +1,7 @@
 import { useState } from "react";
-import Sidebar from "@/components/Sidebar";
+import { useAuth } from "@/lib/auth";
+import { useNavigate } from "react-router-dom";
+import DoctorSidebar from "@/components/DoctorSidebar";
 import {
   User,
   Users,
@@ -48,6 +50,8 @@ type RecentPatient = {
 };
 
 export default function DoctorDashboard() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const alerts: Alert[] = [
     {
       id: "1",
@@ -153,33 +157,51 @@ export default function DoctorDashboard() {
     },
   ];
 
+  const fullName = user ? `${user.firstName} ${user.lastName}` : "Utilisateur";
+  const initials = user
+    ? (user.firstName[0] + user.lastName[0]).toUpperCase()
+    : "--";
+  const doctorTitle = user?.role === "DOCTOR" ? `Dr. ${fullName}` : fullName;
+  const alertsCount = alerts.length;
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
+
   return (
     <div className="flex min-h-screen bg-[#F5F7FA]">
-      <Sidebar />
+      <DoctorSidebar />
 
       <div className="flex-1 lg:ml-[250px]">
         {/* Header */}
         <header className="h-20 bg-white border-b border-[#E2E8F0] flex items-center justify-between px-6 lg:px-10">
           <div>
             <h1 className="text-[#1E293B] text-xl lg:text-[28px] font-bold">
-              Bonjour, Dr. Sara Ahmed
+              {`Bonjour, ${doctorTitle}`}
             </h1>
             <p className="text-[#64748B] text-sm hidden sm:block">
-              Vue d'ensemble de vos patients
+              {"Vue d'ensemble de vos patients"}
             </p>
           </div>
           <div className="flex items-center gap-3 relative">
             <div className="relative">
               <div className="w-[60px] h-[60px] rounded-full bg-[#DBEAFE] flex items-center justify-center">
-                <span className="text-[#2563EB] text-xl font-bold">SA</span>
+                <span className="text-[#2563EB] text-xl font-bold">{initials}</span>
               </div>
               <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#EF4444] flex items-center justify-center">
-                <span className="text-white text-[11px] font-bold">3</span>
+                <span className="text-white text-[11px] font-bold">{alertsCount}</span>
               </div>
             </div>
             <span className="text-[#64748B] text-xs hidden lg:block absolute -bottom-6 right-0">
-              Dr. Sara Ahmed
+              {doctorTitle}
             </span>
+            <button
+              onClick={handleLogout}
+              className="ml-8 h-9 px-4 bg-[#EF4444] text-white text-sm font-semibold rounded hover:bg-[#DC2626] transition-colors"
+            >
+              Déconnexion
+            </button>
           </div>
         </header>
 

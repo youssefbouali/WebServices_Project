@@ -1,4 +1,6 @@
-import Sidebar from "@/components/Sidebar";
+import PatientSidebar from "@/components/PatientSidebar";
+import { useAuth } from "@/lib/auth";
+import { useNavigate } from "react-router-dom";
 import {
   Calendar,
   Clock,
@@ -36,6 +38,18 @@ type HealthTip = {
 };
 
 export default function PatientDashboard() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const fullName = user ? `${user.firstName} ${user.lastName}` : "Utilisateur";
+  const initials = user ? (user.firstName[0] + user.lastName[0]).toUpperCase() : "??";
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } finally {
+      navigate("/");
+    }
+  };
   const alerts: Alert[] = [
     {
       id: "1",
@@ -110,14 +124,14 @@ export default function PatientDashboard() {
 
   return (
     <div className="flex min-h-screen bg-[#F5F7FA]">
-      <Sidebar />
+      <PatientSidebar />
 
       <div className="flex-1 lg:ml-[250px]">
         {/* Header */}
         <header className="h-20 bg-white border-b border-[#E2E8F0] flex items-center justify-between px-6 lg:px-10">
           <div>
             <h1 className="text-[#1E293B] text-xl lg:text-[28px] font-bold">
-              Bonjour, Ahmed
+              Bonjour, {fullName}
             </h1>
             <p className="text-[#64748B] text-sm hidden sm:block">
               Bienvenue sur votre tableau de bord
@@ -125,11 +139,15 @@ export default function PatientDashboard() {
           </div>
           <div className="flex items-center gap-3">
             <div className="w-[60px] h-[60px] rounded-full bg-[#DBEAFE] flex items-center justify-center">
-              <span className="text-[#2563EB] text-xl font-bold">AK</span>
+              <span className="text-[#2563EB] text-xl font-bold">{initials}</span>
             </div>
-            <span className="text-[#64748B] text-xs hidden lg:block">
-              Ahmed Khalid
-            </span>
+            <span className="text-[#64748B] text-xs hidden lg:block">{fullName}</span>
+            <button
+              onClick={handleLogout}
+              className="px-4 h-[32px] bg-[#EF4444] text-white text-[13px] font-bold rounded hover:bg-[#DC2626] transition-colors"
+            >
+              Se déconnecter
+            </button>
           </div>
         </header>
 

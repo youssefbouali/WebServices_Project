@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,25 +12,82 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { getProfileById, updateProfileById } from "@/lib/api/profiles";
 
 export default function ProfileEdit() {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
-    fullName: "Dr. Sara Ahmed",
-    email: "sara.ahmed@health.ma",
-    phone: "+212 6XX XXX XXX",
+    fullName: "",
+    email: "",
+    phone: "",
     gender: "Féminin",
-    birthDate: "15/03/1985",
+    birthDate: "",
     specialty: "Cardiologie",
-    registrationNumber: "INPE-12345",
-    experience: "12 ans",
-    address: "123 Avenue Mohammed V, Agadir",
-    bio: "Spécialisée en cardiologie avec focus sur les maladies cardiovasculaires chroniques...",
+    registrationNumber: "",
+    experience: "",
+    address: "",
+    bio: "",
   });
 
-  const handleSave = () => {
-    // Save logic here
-    navigate("/profiles/detail");
+  const profileId = searchParams.get("id") || "";
+
+  useEffect(() => {
+    if (!profileId) {
+      toast({ description: "ID du profil manquant" });
+      navigate("/profiles");
+      return;
+    }
+    (async () => {
+      try {
+        setLoading(true);
+        const p = await getProfileById(profileId);
+        setFormData((prev) => ({
+          ...prev,
+          fullName: `${p.firstName} ${p.lastName}`.trim(),
+          email: p.email || "",
+          phone: p.phone || "",
+          bio: p.maladieChronique || "",
+        }));
+      } catch (err) {
+        toast({ description: (err as any)?.message || "Échec de chargement du profil" });
+      } finally {
+        setLoading(false);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profileId]);
+
+  const handleSave = async () => {
+    if (!profileId) return;
+    try {
+      setSaving(true);
+      const name = formData.fullName.trim();
+      let firstName = name;
+      let lastName = "";
+      if (name.includes(" ")) {
+        const parts = name.split(" ");
+        firstName = parts.shift() || "";
+        lastName = parts.join(" ");
+      }
+      await updateProfileById(profileId, {
+        firstName,
+        lastName,
+        email: formData.email,
+        phone: formData.phone,
+        maladieChronique: formData.bio || undefined,
+      });
+      toast({ description: "Profil mis à jour" });
+      navigate("/profiles");
+    } catch (err) {
+      toast({ description: (err as any)?.message || "Échec de la mise à jour" });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -90,7 +147,7 @@ export default function ProfileEdit() {
               <div className="flex flex-col items-center gap-3 lg:gap-4">
                 <div className="w-20 h-20 lg:w-[100px] lg:h-[100px] rounded-full bg-[#2563EB] flex items-center justify-center flex-shrink-0">
                   <span className="text-white text-2xl lg:text-[32px] font-bold">
-                    SA
+                    {(formData.fullName || "").split(" ").map(s => s[0]).join("").slice(0,2).toUpperCase() || "--"}
                   </span>
                 </div>
                 <Button
@@ -114,6 +171,7 @@ export default function ProfileEdit() {
                       setFormData({ ...formData, fullName: e.target.value })
                     }
                     className="h-12 border-[#E2E8F0] text-sm"
+                    disabled={loading}
                   />
                 </div>
 
@@ -129,6 +187,7 @@ export default function ProfileEdit() {
                       setFormData({ ...formData, email: e.target.value })
                     }
                     className="h-12 border-[#E2E8F0] text-sm"
+                    disabled={loading}
                   />
                 </div>
 
@@ -144,6 +203,7 @@ export default function ProfileEdit() {
                         setFormData({ ...formData, phone: e.target.value })
                       }
                       className="h-12 border-[#E2E8F0] text-sm"
+                      disabled={loading}
                     />
                   </div>
                   <div>
@@ -179,6 +239,7 @@ export default function ProfileEdit() {
                         setFormData({ ...formData, birthDate: e.target.value })
                       }
                       className="h-12 border-[#E2E8F0] text-sm"
+                      disabled={loading}
                     />
                   </div>
                   <div>
@@ -219,6 +280,7 @@ export default function ProfileEdit() {
                         })
                       }
                       className="h-12 border-[#E2E8F0] text-sm"
+                      disabled={loading}
                     />
                   </div>
                   <div>
@@ -231,6 +293,7 @@ export default function ProfileEdit() {
                         setFormData({ ...formData, experience: e.target.value })
                       }
                       className="h-12 border-[#E2E8F0] text-sm"
+                      disabled={loading}
                     />
                   </div>
                 </div>
@@ -246,6 +309,7 @@ export default function ProfileEdit() {
                       setFormData({ ...formData, address: e.target.value })
                     }
                     className="h-12 border-[#E2E8F0] text-sm"
+                    disabled={loading}
                   />
                 </div>
 
@@ -260,13 +324,14 @@ export default function ProfileEdit() {
                       setFormData({ ...formData, bio: e.target.value })
                     }
                     className="min-h-[80px] border-[#E2E8F0] text-sm text-[#64748B]"
+                    disabled={loading}
                   />
                 </div>
 
                 {/* Action Buttons */}
                 <div className="flex flex-col-reverse lg:flex-row gap-3 pt-4">
                   <Button
-                    onClick={() => navigate("/profiles/detail")}
+                    onClick={() => navigate("/profiles")}
                     variant="outline"
                     className="h-10 lg:h-11 border-[#E2E8F0] text-[#64748B] text-sm hover:bg-[#F8FAFC] lg:w-[120px]"
                   >
@@ -275,8 +340,9 @@ export default function ProfileEdit() {
                   <Button
                     onClick={handleSave}
                     className="bg-[#2563EB] text-white hover:bg-[#1E40AF] h-10 lg:h-11 text-sm lg:w-[140px]"
+                    disabled={saving || loading}
                   >
-                    Enregistrer
+                    {saving ? "Enregistrement..." : "Enregistrer"}
                   </Button>
                 </div>
               </div>

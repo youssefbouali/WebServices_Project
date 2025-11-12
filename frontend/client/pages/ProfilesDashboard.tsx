@@ -1,153 +1,161 @@
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/use-toast";
+import { Search, MoreVertical, ChevronLeft, Trash2, Plus } from "lucide-react";
 import {
-  Search,
-  RefreshCw,
-  CheckCircle,
-  AlertCircle,
-  MoreVertical,
-  ChevronLeft,
-} from "lucide-react";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Profile,
+  listProfiles,
+  registerProfile,
+  deleteProfileById,
+  getCurrentProfile,
+} from "@/lib/api/profiles";
 
-interface Patient {
-  id: string;
-  name: string;
-  initials: string;
-  avatarColor: string;
-  medication: string;
-  medicationType: string;
-  frequency: string;
-  schedule: string;
-  progress: number;
-  totalDays: number;
-  currentDays: number;
-  status: "actif" | "alerte" | "terminé" | "suspendu";
+type RoleFilter = "ALL" | "PATIENT" | "DOCTOR" | "ADMIN";
+
+function roleBadgeColor(role: Profile["role"]) {
+  switch (role) {
+    case "PATIENT":
+      return "bg-[#DBEAFE] text-[#2563EB]";
+    case "DOCTOR":
+      return "bg-[#D1FAE5] text-[#059669]";
+    case "ADMIN":
+      return "bg-[#FEE2E2] text-[#DC2626]";
+  }
 }
 
-const patients: Patient[] = [
-  {
-    id: "#P001",
-    name: "Ahmed Khalid",
-    initials: "AK",
-    avatarColor: "#FBBF24",
-    medication: "Aspirine 100mg",
-    medicationType: "Anticoagulant",
-    frequency: "1x / jour",
-    schedule: "Matin - 08:00",
-    progress: 93,
-    totalDays: 30,
-    currentDays: 28,
-    status: "actif",
-  },
-  {
-    id: "#P005",
-    name: "Fatima Zahra",
-    initials: "FZ",
-    avatarColor: "#EC4899",
-    medication: "Metformine 850mg",
-    medicationType: "Antidiabétique",
-    frequency: "2x / jour",
-    schedule: "Matin & Soir",
-    progress: 60,
-    totalDays: 25,
-    currentDays: 15,
-    status: "actif",
-  },
-  {
-    id: "#P004",
-    name: "Mohammed Hassan",
-    initials: "MH",
-    avatarColor: "#8B5CF6",
-    medication: "Lisinopril 10mg",
-    medicationType: "Antihypertenseur",
-    frequency: "1x / jour",
-    schedule: "Soir - 20:00",
-    progress: 8,
-    totalDays: 60,
-    currentDays: 5,
-    status: "alerte",
-  },
-  {
-    id: "#P003",
-    name: "Khalid Admin",
-    initials: "KA",
-    avatarColor: "#06B6D4",
-    medication: "Oméprazole 20mg",
-    medicationType: "Inhibiteur pompe à protons",
-    frequency: "1x / jour",
-    schedule: "Matin - 07:30",
-    progress: 100,
-    totalDays: 14,
-    currentDays: 14,
-    status: "terminé",
-  },
-  {
-    id: "#P008",
-    name: "Leila Mansouri",
-    initials: "LM",
-    avatarColor: "#F97316",
-    medication: "Levothyroxine 75µg",
-    medicationType: "Hormone thyroïdienne",
-    frequency: "1x / jour",
-    schedule: "Matin - 06:30",
-    progress: 22,
-    totalDays: 90,
-    currentDays: 20,
-    status: "actif",
-  },
-  {
-    id: "#P012",
-    name: "ahmed khalil",
-    initials: "YB",
-    avatarColor: "#14B8A6",
-    medication: "Atorvastatine 40mg",
-    medicationType: "Hypolipémiant",
-    frequency: "1x / jour",
-    schedule: "Soir - 21:00",
-    progress: 22,
-    totalDays: 45,
-    currentDays: 10,
-    status: "suspendu",
-  },
-];
-
-const getStatusStyles = (status: Patient["status"]) => {
-  switch (status) {
-    case "actif":
-      return "bg-[#D1FAE5] text-[#059669]";
-    case "alerte":
-      return "bg-[#FEE2E2] text-[#DC2626]";
-    case "terminé":
-      return "bg-[#DBEAFE] text-[#2563EB]";
-    case "suspendu":
-      return "bg-[#FEF3C7] text-[#D97706]";
-  }
-};
-
-const getStatusLabel = (status: Patient["status"]) => {
-  switch (status) {
-    case "actif":
-      return "Actif";
-    case "alerte":
-      return "Alerte";
-    case "terminé":
-      return "Terminé";
-    case "suspendu":
-      return "Suspendu";
-  }
-};
-
-const getProgressColor = (progress: number) => {
-  if (progress >= 80) return "#10B981";
-  if (progress >= 50) return "#3B82F6";
-  if (progress >= 20) return "#F59E0B";
-  return "#EF4444";
-};
-
 export default function ProfilesDashboard() {
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>("ALL");
+  const [addOpen, setAddOpen] = useState(false);
+  const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
+  const [addForm, setAddForm] = useState({
+    email: "",
+    firstName: "",
+    lastName: "",
+    role: "PATIENT" as Profile["role"],
+    phone: "",
+    maladieChronique: "",
+    password: "",
+  });
+  const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; profile: Profile | null }>({ open: false, profile: null });
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        // Récupérer le profil courant (pour éviter suppression de soi-même)
+        try {
+          const me = await getCurrentProfile();
+          setCurrentProfileId(me.id);
+        } catch (_) {
+          // ignorer silencieusement si non connecté ou non autorisé
+        }
+        const data = await listProfiles();
+        setProfiles(data);
+      } catch (err) {
+        const message =
+          (err as any)?.message || "Échec du chargement des profils";
+        setError(message);
+        toast({ description: message });
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return profiles.filter((p) => {
+      const matchesRole = roleFilter === "ALL" || p.role === roleFilter;
+      const matchesSearch =
+        !q ||
+        p.firstName.toLowerCase().includes(q) ||
+        p.lastName.toLowerCase().includes(q) ||
+        p.email.toLowerCase().includes(q) ||
+        p.phone?.toLowerCase().includes(q);
+      return matchesRole && matchesSearch;
+    });
+  }, [profiles, search, roleFilter]);
+
+  async function handleDelete(id: string) {
+    const target = profiles.find(p => p.id === id);
+    // Empêcher la suppression de son propre compte pour éviter perte d'accès et liste vide
+    if (currentProfileId && id === currentProfileId) {
+      toast({ description: "Vous ne pouvez pas supprimer votre propre compte depuis ce tableau." });
+      return;
+    }
+    // Sauvegarde de l'état avant suppression pour détection d'incohérences
+    const before = profiles.slice();
+    // Optimistic update: retirer l'élément localement
+    setProfiles(prev => prev.filter(p => p.id !== id));
+    try {
+      await deleteProfileById(id);
+      // Recharge depuis l'API pour garantir la cohérence avec le backend
+      const fresh = await listProfiles();
+      const expectedLen = before.length - 1;
+      if (fresh.length < expectedLen) {
+        // Incohérence détectée: plus d'éléments supprimés que prévu
+        setProfiles(before.filter(p => p.id !== id));
+        toast({ description: "Attention: incohérence côté serveur détectée. Seul le profil ciblé a été retiré dans l’interface." });
+      } else {
+        setProfiles(fresh);
+        toast({ description: `Profil supprimé${target ? `: ${target.email}` : ""}` });
+      }
+    } catch (err) {
+      // En cas d'erreur, recharger pour restaurer l'état réel
+      const restored = await listProfiles().catch(() => null);
+      if (restored) setProfiles(restored);
+      toast({ description: (err as any)?.message || "Échec de suppression" });
+    }
+  }
+
+  function requestDelete(profile: Profile) {
+    setConfirmDelete({ open: true, profile });
+  }
+
+  function handleEdit(id: string) {
+    navigate(`/profiles/edit?id=${encodeURIComponent(id)}`);
+  }
+
+  async function handleAddSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    try {
+      const { profile } = await registerProfile(addForm);
+      setProfiles((prev) => [profile, ...prev]);
+      setAddOpen(false);
+      setAddForm({
+        email: "",
+        firstName: "",
+        lastName: "",
+        role: "PATIENT",
+        phone: "",
+        maladieChronique: "",
+        password: "",
+      });
+      toast({ description: "Profil ajouté" });
+    } catch (err) {
+      toast({ description: (err as any)?.message || "Échec d’ajout" });
+    }
+  }
+
   return (
     <div className="flex min-h-screen bg-[#F5F7FA]">
       <Sidebar />
@@ -291,32 +299,62 @@ export default function ProfilesDashboard() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-[13px] h-[13px] text-white" />
                 <Input
                   placeholder="Rechercher un profil..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
                   className="pl-10 bg-[#F8FAFC] border-[#E2E8F0] h-10 text-[14px] placeholder:text-[#94A3B8]"
                 />
               </div>
 
               {/* Filter Buttons */}
               <div className="flex gap-2">
-                <Button className="bg-[#2563EB] text-white hover:bg-[#1E40AF] h-10 text-[13px] px-6">
+                <Button
+                  onClick={() => setRoleFilter("ALL")}
+                  className={`h-10 text-[13px] px-6 ${
+                    roleFilter === "ALL"
+                      ? "bg-[#2563EB] text-white hover:bg-[#1E40AF]"
+                      : "bg-white border border-[#E2E8F0] text-[#64748B] hover:bg-[#F8FAFC]"
+                  }`}
+                >
                   Tous
                 </Button>
                 <Button
-                  variant="outline"
-                  className="h-10 border-[#E2E8F0] text-[#64748B] text-[13px] px-6 hover:bg-[#F8FAFC]"
+                  onClick={() => setRoleFilter("DOCTOR")}
+                  className={`h-10 text-[13px] px-6 ${
+                    roleFilter === "DOCTOR"
+                      ? "bg-[#2563EB] text-white hover:bg-[#1E40AF]"
+                      : "bg-white border border-[#E2E8F0] text-[#64748B] hover:bg-[#F8FAFC]"
+                  }`}
                 >
                   Docteurs
                 </Button>
                 <Button
-                  variant="outline"
-                  className="h-10 border-[#E2E8F0] text-[#64748B] text-[13px] px-6 hover:bg-[#F8FAFC]"
+                  onClick={() => setRoleFilter("PATIENT")}
+                  className={`h-10 text-[13px] px-6 ${
+                    roleFilter === "PATIENT"
+                      ? "bg-[#2563EB] text-white hover:bg-[#1E40AF]"
+                      : "bg-white border border-[#E2E8F0] text-[#64748B] hover:bg-[#F8FAFC]"
+                  }`}
                 >
                   Patients
+                </Button>
+                <Button
+                  onClick={() => setRoleFilter("ADMIN")}
+                  className={`h-10 text-[13px] px-6 ${
+                    roleFilter === "ADMIN"
+                      ? "bg-[#2563EB] text-white hover:bg-[#1E40AF]"
+                      : "bg-white border border-[#E2E8F0] text-[#64748B] hover:bg-[#F8FAFC]"
+                  }`}
+                >
+                  Admins
                 </Button>
               </div>
 
               {/* Add Button */}
-              <Button className="bg-[#10B981] text-white hover:bg-[#059669] h-10 text-[13px] px-5">
-                + Ajouter
+              <Button
+                onClick={() => setAddOpen(true)}
+                className="bg-[#10B981] text-white hover:bg-[#059669] h-10 text-[13px] px-5"
+              >
+                <Plus className="w-4 h-4 mr-1" /> Ajouter
               </Button>
             </div>
           </div>
@@ -328,27 +366,27 @@ export default function ProfilesDashboard() {
               <div className="grid grid-cols-12 gap-4">
                 <div className="col-span-3">
                   <h3 className="text-[12px] font-bold text-[#64748B] uppercase">
-                    Patient
+                    Profil
                   </h3>
                 </div>
                 <div className="col-span-3">
                   <h3 className="text-[12px] font-bold text-[#64748B] uppercase">
-                    Médicament
+                    Email
                   </h3>
                 </div>
                 <div className="col-span-2">
                   <h3 className="text-[12px] font-bold text-[#64748B] uppercase">
-                    Fréquence
+                    Téléphone
                   </h3>
                 </div>
                 <div className="col-span-2">
                   <h3 className="text-[12px] font-bold text-[#64748B] uppercase">
-                    Progression
+                    Rôle
                   </h3>
                 </div>
                 <div className="col-span-2">
                   <h3 className="text-[12px] font-bold text-[#64748B] uppercase">
-                    Statut
+                    Actions
                   </h3>
                 </div>
               </div>
@@ -356,80 +394,91 @@ export default function ProfilesDashboard() {
 
             {/* Table Body */}
             <div className="divide-y divide-[#E2E8F0]">
-              {patients.map((patient) => (
+              {loading && (
+                <div className="px-6 py-4 text-sm text-[#64748B]">
+                  Chargement des profils...
+                </div>
+              )}
+              {error && (
+                <div className="px-6 py-4 text-sm text-[#DC2626]">{error}</div>
+              )}
+              {!loading && filtered.length === 0 && (
+                <div className="px-6 py-4 text-sm text-[#64748B]">
+                  Aucun profil trouvé
+                </div>
+              )}
+              {filtered.map((p) => (
                 <div
-                  key={patient.id}
+                  key={p.id}
                   className="px-6 py-4 hover:bg-[#F8FAFC] transition-colors"
                 >
                   <div className="grid grid-cols-12 gap-4 items-center">
-                    {/* Patient */}
-                    <div className="col-span-3 flex items-center gap-3">
-                      <div
-                        className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
-                        style={{ backgroundColor: patient.avatarColor }}
-                      >
+                    {/* Profil */}
+                    <div className="col-span-3 flex items-center gap-3 cursor-pointer" onClick={() => navigate(`/profiles/detail?id=${encodeURIComponent(p.id)}`)}>
+                      <div className="w-9 h-9 rounded-full bg-[#2563EB] flex items-center justify-center flex-shrink-0">
                         <span className="text-white text-[12px] font-bold">
-                          {patient.initials}
+                          {(p.firstName[0] + p.lastName[0]).toUpperCase()}
                         </span>
                       </div>
                       <div className="min-w-0">
                         <p className="text-[13px] text-[#1E293B] font-normal truncate">
-                          {patient.name}
+                          {p.firstName} {p.lastName}
                         </p>
                         <p className="text-[11px] text-[#94A3B8] truncate">
-                          ID: {patient.id}
+                          ID: {p.id}
                         </p>
                       </div>
                     </div>
 
-                    {/* Medication */}
+                    {/* Email */}
                     <div className="col-span-3">
                       <p className="text-[13px] text-[#1E293B] truncate">
-                        {patient.medication}
-                      </p>
-                      <p className="text-[11px] text-[#94A3B8] truncate">
-                        {patient.medicationType}
+                        {p.email}
                       </p>
                     </div>
 
-                    {/* Frequency */}
+                    {/* Téléphone */}
                     <div className="col-span-2">
                       <p className="text-[13px] text-[#1E293B]">
-                        {patient.frequency}
-                      </p>
-                      <p className="text-[11px] text-[#94A3B8]">
-                        {patient.schedule}
+                        {p.phone || "—"}
                       </p>
                     </div>
 
-                    {/* Progress */}
+                    {/* Rôle */}
                     <div className="col-span-2">
-                      <div className="w-full h-2 bg-[#E2E8F0] rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all"
-                          style={{
-                            width: `${patient.progress}%`,
-                            backgroundColor: getProgressColor(patient.progress),
-                          }}
-                        />
-                      </div>
-                      <p className="text-[11px] text-[#64748B] mt-1">
-                        {patient.currentDays}/{patient.totalDays} jours
-                      </p>
-                    </div>
-
-                    {/* Status */}
-                    <div className="col-span-2 flex items-center justify-between">
                       <Badge
-                        className={`${getStatusStyles(
-                          patient.status,
+                        className={`${roleBadgeColor(
+                          p.role,
                         )} rounded-full px-3 py-1 text-[11px] font-normal border-0`}
                       >
-                        {getStatusLabel(patient.status)}
+                        {p.role}
                       </Badge>
-                      <button className="text-[#64748B] hover:text-[#1E293B] transition-colors">
-                        <MoreVertical className="w-4 h-4" />
-                      </button>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="col-span-2 flex items-center justify-between">
+                      <Badge
+                        className={`${p.isActive ? "bg-[#D1FAE5] text-[#059669]" : "bg-[#FEE2E2] text-[#DC2626]"} rounded-full px-3 py-1 text-[11px] font-normal border-0`}
+                      >
+                        {p.isActive ? "Actif" : "Inactif"}
+                      </Badge>
+                      <div className="flex items-center gap-3">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button className="text-[#64748B] hover:text-[#1E293B] transition-colors" title="Actions">
+                              <MoreVertical className="w-4 h-4" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-40">
+                            <DropdownMenuItem onClick={() => handleEdit(p.id)}>
+                              Modifier
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="text-[#EF4444]" onClick={() => requestDelete(p)}>
+                              Supprimer
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -454,7 +503,156 @@ export default function ProfilesDashboard() {
             </div>
           </div>
         </main>
+        {/* SweetAlert-style confirm dialog */}
+        <Dialog open={confirmDelete.open} onOpenChange={(o) => setConfirmDelete({ open: o, profile: o ? confirmDelete.profile : null })}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Confirmer la suppression</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-2">
+              <p className="text-sm text-[#1E293B]">Vous êtes sur le point de supprimer ce profil :</p>
+              {confirmDelete.profile && (
+                <div className="rounded-md border border-[#E2E8F0] p-3 bg-[#F8FAFC]">
+                  <p className="text-[13px] text-[#1E293B] font-medium">{confirmDelete.profile.firstName} {confirmDelete.profile.lastName}</p>
+                  <p className="text-[12px] text-[#64748B]">{confirmDelete.profile.email}</p>
+                  <p className="text-[12px] text-[#64748B]">Rôle: {confirmDelete.profile.role}</p>
+                </div>
+              )}
+              <p className="text-[12px] text-[#DC2626]">Cette action est définitive. Elle ne peut pas être annulée.</p>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setConfirmDelete({ open: false, profile: null })}>
+                Annuler
+              </Button>
+              <Button
+                type="button"
+                className="bg-[#EF4444] hover:bg-[#DC2626]"
+                onClick={() => {
+                  if (confirmDelete.profile) {
+                    handleDelete(confirmDelete.profile.id);
+                  }
+                  setConfirmDelete({ open: false, profile: null });
+                }}
+              >
+                Supprimer
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        <AddProfileDialog
+          open={addOpen}
+          onOpenChange={setAddOpen}
+          onSubmit={handleAddSubmit}
+          form={addForm}
+          setForm={setAddForm}
+        />
       </div>
     </div>
+  );
+}
+
+// Add Profile Dialog
+function AddProfileDialog({ open, onOpenChange, onSubmit, form, setForm }: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  onSubmit: (e: React.FormEvent) => Promise<void> | void;
+  form: {
+    email: string;
+    firstName: string;
+    lastName: string;
+    role: Profile["role"];
+    phone: string;
+    maladieChronique?: string;
+    password: string;
+  };
+  setForm: (f: any) => void;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader>
+          <DialogTitle>Ajouter un profil</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={onSubmit} className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Email</Label>
+              <Input
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                required
+              />
+            </div>
+            <div>
+              <Label>Téléphone</Label>
+              <Input
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Prénom</Label>
+              <Input
+                value={form.firstName}
+                onChange={(e) =>
+                  setForm({ ...form, firstName: e.target.value })
+                }
+                required
+              />
+            </div>
+            <div>
+              <Label>Nom</Label>
+              <Input
+                value={form.lastName}
+                onChange={(e) => setForm({ ...form, lastName: e.target.value })}
+                required
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Rôle</Label>
+              <select
+                value={form.role}
+                onChange={(e) =>
+                  setForm({ ...form, role: e.target.value as Profile["role"] })
+                }
+                className="w-full h-10 border border-[#E2E8F0] rounded-md text-sm"
+              >
+                <option value="PATIENT">PATIENT</option>
+                <option value="DOCTOR">DOCTOR</option>
+                <option value="ADMIN">ADMIN</option>
+              </select>
+            </div>
+            <div>
+              <Label>Maladie chronique (optionnel)</Label>
+              <Input
+                value={form.maladieChronique}
+                onChange={(e) =>
+                  setForm({ ...form, maladieChronique: e.target.value })
+                }
+              />
+            </div>
+          </div>
+          <div>
+            <Label>Mot de passe</Label>
+            <Input
+              type="password"
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              required
+            />
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Annuler
+            </Button>
+            <Button type="submit" className="bg-[#10B981] hover:bg-[#059669]">
+              Ajouter
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

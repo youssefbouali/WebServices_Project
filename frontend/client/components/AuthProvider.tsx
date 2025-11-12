@@ -69,7 +69,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         role: data.role,
         phone: data.phone,
         maladieChronique: data.maladieChronique,
-        passwordHash: data.password,
+        password: data.password,
       });
       setToken(response.token);
       setTokenState(response.token);

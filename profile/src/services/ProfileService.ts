@@ -73,8 +73,10 @@ export class ProfileService {
   }
 
   async remove(id: string): Promise<void> {
-    const result = await this.repo.delete({ _id: new ObjectId(id) } as any);
-    if (result.affected === 0) throw new Error('Profile not found');
+    // Supprimer de façon sûre un seul document en chargeant l'entité
+    const profile = await this.findById(id);
+    if (!profile) throw new Error('Profile not found');
+    await this.repo.remove(profile);
   }
 
   async softDelete(id: string): Promise<Profile> {
