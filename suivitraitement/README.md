@@ -63,7 +63,7 @@ POST http://localhost:8002/treatments
 {
   "patientId": 1,
   "medicament": "Doliprane",
-  "dosage": "500mg",
+  "dosage": "300mg",
   "frequence": "2 fois par jour",
   "dateDebut": "2025-10-30T08:00:00",
   "dateFin": "2025-11-05T08:00:00",
