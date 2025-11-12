@@ -11,7 +11,6 @@ export default defineConfig(({ mode }) => ({
 	allowedHosts: ["eduapp.mywire.org", "localhost"],
     fs: {
       allow: [
-<<<<<<< HEAD
         // Allow standard app sources
         path.resolve(__dirname, "./client"),
         path.resolve(__dirname, "./shared"),
@@ -20,7 +19,6 @@ export default defineConfig(({ mode }) => ({
       ],
       deny: [".env", ".env.*", "*.{crt,pem}", "**/.git/**", "server/**"],
     },
-=======
         "./",
         "./client",
         "./shared",
@@ -28,7 +26,6 @@ export default defineConfig(({ mode }) => ({
       ],
       deny: [".env", ".env.*", "*.{crt,pem}", "**/.git/**"],
 },
->>>>>>> dfeec91a9e548c60d7ab13b2ff01472fcfcb9bc5
   },
   build: {
     outDir: "dist/spa",
