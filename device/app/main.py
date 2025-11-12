@@ -6,6 +6,25 @@ app = FastAPI(title="Device Module")
 
 models.Base.metadata.create_all(bind=database.engine)
 
+
+
+from fastapi.middleware.cors import CORSMiddleware
+
+# Allow all origins for testing (not recommended for production)
+origins = [
+    "*",  # or ["http://localhost:3000", "http://yourfrontend.com"]
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],   # GET, POST, PUT, DELETE, etc.
+    allow_headers=["*"],   # Authorization, Content-Type, etc.
+)
+
+
+
 def get_db():
     db = database.SessionLocal()
     try:
