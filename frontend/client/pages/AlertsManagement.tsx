@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import Sidebar from "@/components/Sidebar";
 import {
   Bell,
@@ -8,69 +9,168 @@ import {
   Search,
   Users,
 } from "lucide-react";
+import { getMeasurementsLastHours, MeasurementData } from "@/lib/api/influxdb";
+import { getDevices, Device } from "@/lib/api/devices";
+
+interface Alert {
+  id: string;
+  severity: "Critique" | "Élevée" | "Moyenne";
+  severityColor: string;
+  device: string;
+  message: string;
+  value: number;
+  patient: string;
+  time: string;
+  status: "En attente" | "Validée";
+  statusColor: string;
+  deviceId: string;
+}
+
+const ALERT_THRESHOLDS: Record<
+  string,
+  { min: number; max: number; normal: { min: number; max: number } }
+> = {
+  heart_rate: { min: 40, max: 100, normal: { min: 60, max: 100 } },
+  temperature: { min: 36, max: 39, normal: { min: 36.5, max: 37.5 } },
+  blood_pressure: { min: 90, max: 160, normal: { min: 90, max: 120 } },
+  oxygen_saturation: { min: 92, max: 100, normal: { min: 95, max: 100 } },
+};
 
 export default function AlertsManagement() {
+  const [measurements, setMeasurements] = useState<MeasurementData[]>([]);
+  const [devices, setDevices] = useState<Device[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [generatedAlerts, setGeneratedAlerts] = useState<Alert[]>([]);
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+
+  useEffect(() => {
+    loadData();
+    const interval = setInterval(loadData, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const loadData = async () => {
+    setIsLoading(true);
+    setError("");
+    try {
+      const [measurementsData, devicesData] = await Promise.all([
+        getMeasurementsLastHours(1),
+        getDevices(),
+      ]);
+      setMeasurements(measurementsData);
+      setDevices(devicesData);
+      setLastUpdate(new Date());
+      generateAlerts(measurementsData, devicesData);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to load data";
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const generateAlerts = (
+    measurements: MeasurementData[],
+    devices: Device[],
+  ) => {
+    const alerts: Alert[] = [];
+    const deviceMap = new Map(devices.map((d) => [d.id.toString(), d]));
+    const seenKeys = new Set<string>();
+
+    for (const measurement of measurements) {
+      const key = `${measurement.device_id}-${measurement._measurement}`;
+      if (seenKeys.has(key)) continue;
+      seenKeys.add(key);
+
+      const device = deviceMap.get(measurement.device_id);
+      const value = measurement._value;
+
+      let severity: "Critique" | "Élevée" | "Moyenne" = "Moyenne";
+      let message = "";
+      let shouldAlert = false;
+
+      const thresholds = ALERT_THRESHOLDS[measurement._measurement] || {
+        min: 0,
+        max: 100,
+        normal: { min: 25, max: 75 },
+      };
+
+      if (value < thresholds.normal.min) {
+        severity = value < thresholds.min ? "Critique" : "Élevée";
+        message = `Valeur faible: ${value.toFixed(2)} (seuil min: ${thresholds.normal.min})`;
+        shouldAlert = true;
+      } else if (value > thresholds.normal.max) {
+        severity = value > thresholds.max ? "Critique" : "Élevée";
+        message = `Valeur élevée: ${value.toFixed(2)} (seuil max: ${thresholds.normal.max})`;
+        shouldAlert = true;
+      }
+
+      if (shouldAlert) {
+        alerts.push({
+          id: `${measurement.device_id}-${Date.now()}-${Math.random()}`,
+          severity,
+          severityColor:
+            severity === "Critique"
+              ? "bg-red-100 text-red-800"
+              : severity === "Élevée"
+                ? "bg-orange-100 text-orange-800"
+                : "bg-yellow-100 text-yellow-800",
+          device: device?.name || `Device ${measurement.device_id}`,
+          message,
+          value,
+          patient: device ? `Patient avec appareil ${device.name}` : "Unknown",
+          time: new Date().toLocaleTimeString("fr-FR"),
+          status: "En attente",
+          statusColor: "bg-orange-100 text-orange-800",
+          deviceId: measurement.device_id,
+        });
+      }
+    }
+
+    setGeneratedAlerts(alerts);
+  };
+
+  const totalAlerts = generatedAlerts.length;
+  const criticalAlerts = generatedAlerts.filter(
+    (a) => a.severity === "Critique",
+  ).length;
+  const pendingAlerts = generatedAlerts.filter(
+    (a) => a.status === "En attente",
+  ).length;
+  const resolvedAlerts = generatedAlerts.filter(
+    (a) => a.status === "Validée",
+  ).length;
+
   const stats = [
     {
       label: "Total Alertes",
-      value: "47",
+      value: totalAlerts.toString(),
       color: "bg-blue-100",
       iconColor: "text-blue-600",
       Icon: Bell,
     },
     {
       label: "Critiques",
-      value: "8",
+      value: criticalAlerts.toString(),
       color: "bg-red-100",
       iconColor: "text-red-600",
       Icon: AlertTriangle,
     },
     {
       label: "En Attente",
-      value: "23",
+      value: pendingAlerts.toString(),
       color: "bg-orange-100",
       iconColor: "text-orange-600",
       Icon: Clock,
     },
     {
       label: "Résolues",
-      value: "16",
+      value: resolvedAlerts.toString(),
       color: "bg-green-100",
       iconColor: "text-green-600",
       Icon: CheckCircle,
-    },
-  ];
-
-  const alerts = [
-    {
-      severity: "Critique",
-      severityColor: "bg-red-100 text-red-800",
-      device: "Moniteur Cardiaque MC-401",
-      message: "Rythme cardiaque anormale détecté",
-      patient: "Marie Dupont - Ch.205",
-      time: "14:32",
-      status: "En attente",
-      statusColor: "bg-orange-100 text-orange-800",
-    },
-    {
-      severity: "Élevée",
-      severityColor: "bg-orange-100 text-orange-800",
-      device: "Respirateur VR-302",
-      message: "Pression d'oxygène faible",
-      patient: "Jean Martin - Ch.103",
-      time: "14:28",
-      status: "En attente",
-      statusColor: "bg-orange-100 text-orange-800",
-    },
-    {
-      severity: "Moyenne",
-      severityColor: "bg-yellow-100 text-yellow-800",
-      device: "Perfusion PF-201",
-      message: "Débit modifié automatiquement",
-      patient: "Sophie Bernard - Ch.301",
-      time: "14:15",
-      status: "Validée",
-      statusColor: "bg-green-100 text-green-800",
     },
   ];
 
@@ -101,14 +201,31 @@ export default function AlertsManagement() {
               </h2>
               <div className="flex items-center gap-3">
                 <span className="text-sm text-gray-500">
-                  Dernière mise à jour: il y a 2 min
+                  {lastUpdate
+                    ? `Mise à jour: ${lastUpdate.toLocaleTimeString("fr-FR")}`
+                    : "Chargement..."}
                 </span>
-                <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
-                  <RefreshCw className="w-4 h-4" />
+                <button
+                  onClick={loadData}
+                  disabled={isLoading}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-50"
+                >
+                  <RefreshCw
+                    className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`}
+                  />
                   <span>Actualiser</span>
                 </button>
               </div>
             </div>
+
+            {error && (
+              <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="flex items-center gap-3">
+                  <AlertTriangle className="w-5 h-5 text-red-600" />
+                  <p className="text-sm text-red-700">{error}</p>
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
@@ -220,47 +337,67 @@ export default function AlertsManagement() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {alerts.map((alert, index) => (
-                    <tr key={index} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">
-                        <input
-                          type="checkbox"
-                          className="rounded border-gray-300"
-                        />
-                      </td>
-                      <td className="px-6 py-4">
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${alert.severityColor}`}
-                        >
-                          {alert.severity}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">
-                        {alert.device}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">
-                        {alert.message}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">
-                        {alert.patient}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {alert.time}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${alert.statusColor}`}
-                        >
-                          {alert.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <button className="text-blue-600 hover:text-blue-700 text-sm">
-                          Voir détails
-                        </button>
+                  {isLoading ? (
+                    <tr>
+                      <td
+                        colSpan={8}
+                        className="px-6 py-8 text-center text-gray-600"
+                      >
+                        Chargement des alertes...
                       </td>
                     </tr>
-                  ))}
+                  ) : generatedAlerts.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={8}
+                        className="px-6 py-8 text-center text-gray-600"
+                      >
+                        Aucune alerte actuellement
+                      </td>
+                    </tr>
+                  ) : (
+                    generatedAlerts.map((alert) => (
+                      <tr key={alert.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4">
+                          <input
+                            type="checkbox"
+                            className="rounded border-gray-300"
+                          />
+                        </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${alert.severityColor}`}
+                          >
+                            {alert.severity}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          {alert.device}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          {alert.message}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          {alert.patient}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {alert.time}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${alert.statusColor}`}
+                          >
+                            {alert.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <button className="text-blue-600 hover:text-blue-700 text-sm">
+                            Détails
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>

@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import {
   ArrowLeft,
@@ -9,8 +11,67 @@ import {
   Users,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { createDevice } from "@/lib/api/devices";
+import { useToast } from "@/hooks/use-toast";
 
 export default function DeviceRegistration() {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [formData, setFormData] = useState({
+    name: "",
+    type: "sensor",
+    manufacturer: "",
+    notes: "",
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleInputChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >,
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name || !formData.type) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez remplir les champs obligatoires (Nom et Type)",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await createDevice({
+        name: formData.name,
+        type: formData.type,
+      });
+      toast({
+        title: "Succès",
+        description: "L'appareil a été créé avec succès",
+      });
+      navigate("/devices");
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to create device";
+      toast({
+        title: "Erreur",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen bg-[#F9FAFB]">
       <Sidebar />
@@ -55,90 +116,104 @@ export default function DeviceRegistration() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  ID de l'appareil
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ex: DEV-2024-001"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Nom de l'appareil *
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    placeholder="Ex: Moniteur Cardiaque 01"
+                    required
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Type d'appareil *
+                  </label>
+                  <select
+                    name="type"
+                    value={formData.type}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="sensor">Capteur</option>
+                    <option value="monitor">Moniteur</option>
+                    <option value="device">Appareil Médical</option>
+                    <option value="pump">Pompe</option>
+                    <option value="ventilator">Respirateur</option>
+                  </select>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Fabricant
+                  </label>
+                  <input
+                    type="text"
+                    name="manufacturer"
+                    value={formData.manufacturer}
+                    onChange={handleInputChange}
+                    placeholder="Ex: Philips Healthcare"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Notes additionnelles
+                  </label>
+                  <textarea
+                    name="notes"
+                    value={formData.notes}
+                    onChange={handleInputChange}
+                    rows={5}
+                    placeholder="Informations supplémentaires sur l'appareil..."
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Type d'appareil
-                </label>
-                <select className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                  <option>Sélectionnez un type</option>
-                  <option>Moniteur cardiaque</option>
-                  <option>Respirateur</option>
-                  <option>Perfusion</option>
-                </select>
-              </div>
+              <div className="border-t border-gray-200 pt-6 mt-6 flex items-center justify-between">
+                <Link
+                  to="/devices"
+                  className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2"
+                >
+                  <span className="text-lg">←</span>
+                  <span>Annuler</span>
+                </Link>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Patient assigné
-                </label>
-                <select className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                  <option>Sélectionnez un patient</option>
-                </select>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => navigate("/devices")}
+                    className="px-6 py-3 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors flex items-center gap-2"
+                  >
+                    <Save className="w-4 h-4" />
+                    <span>Quitter</span>
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-sm disabled:opacity-50"
+                  >
+                    <span className="text-lg">✓</span>
+                    <span>
+                      {isSubmitting
+                        ? "Enregistrement..."
+                        : "Enregistrer l'appareil"}
+                    </span>
+                  </button>
+                </div>
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Date d'enregistrement
-                </label>
-                <input
-                  type="date"
-                  defaultValue="2025-10-22"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Fabricant
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ex: Philips Healthcare"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Notes additionnelles
-                </label>
-                <textarea
-                  rows={5}
-                  placeholder="Informations supplémentaires sur l'appareil..."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-                />
-              </div>
-            </div>
-
-            <div className="border-t border-gray-200 pt-6 mt-6 flex items-center justify-between">
-              <button className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2">
-                <span className="text-lg">×</span>
-                <span>Annuler</span>
-              </button>
-
-              <div className="flex items-center gap-3">
-                <button className="px-6 py-3 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors flex items-center gap-2">
-                  <Save className="w-4 h-4" />
-                  <span>Enregistrer comme brouillon</span>
-                </button>
-                <button className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-sm">
-                  <span className="text-lg">✓</span>
-                  <span>Enregistrer l'appareil</span>
-                </button>
-              </div>
-            </div>
+            </form>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

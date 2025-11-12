@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import {
   Tablet,
@@ -7,13 +8,37 @@ import {
   Users,
   Eye,
   Edit,
+  Trash2,
 } from "lucide-react";
-import { getDevices, Device } from "@/lib/api/devices";
+import {
+  getDevices,
+  Device,
+  updateDevice,
+  deleteDevice,
+} from "@/lib/api/devices";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
 
 export default function DeviceDashboard() {
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [devices, setDevices] = useState<Device[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [viewingDevice, setViewingDevice] = useState<Device | null>(null);
+  const [editingDevice, setEditingDevice] = useState<Device | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    status: "inactive" as "active" | "inactive",
+    last_value: 0,
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     loadDevices();
@@ -31,6 +56,66 @@ export default function DeviceDashboard() {
       setError(message);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleViewDevice = (device: Device) => {
+    setViewingDevice(device);
+  };
+
+  const handleEditDevice = (device: Device) => {
+    setEditingDevice(device);
+    setEditFormData({
+      status: device.status,
+      last_value: device.last_value,
+    });
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingDevice) return;
+    setIsSubmitting(true);
+    try {
+      await updateDevice(editingDevice.id, editFormData);
+      toast({
+        title: "Appareil mis à jour",
+        description: `${editingDevice.name} a été mis à jour avec succès.`,
+      });
+      loadDevices();
+      setEditingDevice(null);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to update device";
+      toast({
+        title: "Erreur",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteDevice = async (deviceId: number) => {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer cet appareil?")) return;
+    setIsSubmitting(true);
+    try {
+      await deleteDevice(deviceId);
+      toast({
+        title: "Appareil supprimé",
+        description: "L'appareil a été supprimé avec succès.",
+      });
+      loadDevices();
+      setViewingDevice(null);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to delete device";
+      toast({
+        title: "Erreur",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -129,7 +214,10 @@ export default function DeviceDashboard() {
               <h2 className="text-xl font-semibold text-gray-900">
                 Liste des appareils
               </h2>
-              <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
+              <button
+                onClick={() => navigate("/device-registration")}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+              >
                 <span className="text-2xl leading-none">+</span>
                 <span>Ajouter appareil</span>
               </button>
@@ -211,10 +299,16 @@ export default function DeviceDashboard() {
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            <button className="text-blue-600 hover:text-blue-700">
+                            <button
+                              onClick={() => handleViewDevice(device)}
+                              className="text-blue-600 hover:text-blue-700"
+                            >
                               <Eye className="w-5 h-5" />
                             </button>
-                            <button className="text-gray-600 hover:text-gray-700">
+                            <button
+                              onClick={() => handleEditDevice(device)}
+                              className="text-gray-600 hover:text-gray-700"
+                            >
                               <Edit className="w-4 h-4" />
                             </button>
                           </div>
@@ -251,6 +345,154 @@ export default function DeviceDashboard() {
           </div>
         </div>
       </main>
+
+      <Dialog
+        open={!!viewingDevice}
+        onOpenChange={() => setViewingDevice(null)}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Détails de l'appareil</DialogTitle>
+          </DialogHeader>
+          {viewingDevice && (
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700">
+                  ID Appareil
+                </label>
+                <p className="mt-1 text-gray-900">#{viewingDevice.id}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Nom</label>
+                <p className="mt-1 text-gray-900">{viewingDevice.name}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">
+                  Type
+                </label>
+                <p className="mt-1 text-gray-900">{viewingDevice.type}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">
+                  État
+                </label>
+                <p className="mt-1">
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      viewingDevice.status === "active"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-red-100 text-red-800"
+                    }`}
+                  >
+                    {viewingDevice.status === "active" ? "Actif" : "Inactif"}
+                  </span>
+                </p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">
+                  Dernière valeur
+                </label>
+                <p className="mt-1 text-gray-900">{viewingDevice.last_value}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">
+                  Dernière lecture
+                </label>
+                <p className="mt-1 text-gray-900">
+                  {new Date(viewingDevice.last_reading).toLocaleString("fr-FR")}
+                </p>
+              </div>
+            </div>
+          )}
+          <DialogFooter className="mt-6">
+            <button
+              onClick={() => handleDeleteDevice(viewingDevice!.id)}
+              disabled={isSubmitting}
+              className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors disabled:opacity-50 flex items-center gap-2"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span>Supprimer</span>
+            </button>
+            <button
+              onClick={() => {
+                setViewingDevice(null);
+                handleEditDevice(viewingDevice!);
+              }}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Éditer
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={!!editingDevice}
+        onOpenChange={() => setEditingDevice(null)}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Éditer l'appareil</DialogTitle>
+            <DialogDescription>
+              Modifiez les informations de l'appareil
+            </DialogDescription>
+          </DialogHeader>
+          {editingDevice && (
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700">
+                  État
+                </label>
+                <select
+                  value={editFormData.status}
+                  onChange={(e) =>
+                    setEditFormData({
+                      ...editFormData,
+                      status: e.target.value as "active" | "inactive",
+                    })
+                  }
+                  className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="active">Actif</option>
+                  <option value="inactive">Inactif</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">
+                  Dernière valeur
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={editFormData.last_value}
+                  onChange={(e) =>
+                    setEditFormData({
+                      ...editFormData,
+                      last_value: parseFloat(e.target.value),
+                    })
+                  }
+                  className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter className="mt-6">
+            <button
+              onClick={() => setEditingDevice(null)}
+              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Annuler
+            </button>
+            <button
+              onClick={handleSaveEdit}
+              disabled={isSubmitting}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+            >
+              Enregistrer
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

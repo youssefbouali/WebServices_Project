@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import {
   Heart,
@@ -8,9 +9,64 @@ import {
   Flame,
   Bed,
   Users,
+  RefreshCw,
+  AlertTriangle,
+  CheckCircle,
 } from "lucide-react";
+import { getMeasurementsLastHours } from "@/lib/api/influxdb";
+import type { MeasurementData } from "@/lib/api/influxdb";
 
 export default function RealTimeMonitoring() {
+  const [measurements, setMeasurements] = useState<MeasurementData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+
+  const loadMeasurements = async () => {
+    setIsLoading(true);
+    setError("");
+    try {
+      const data = await getMeasurementsLastHours(1);
+      setMeasurements(data);
+      setLastUpdate(new Date());
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to load measurements";
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadMeasurements();
+    const interval = setInterval(loadMeasurements, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const getLatestMeasurementsByDevice = () => {
+    const deviceMap = new Map<string, MeasurementData>();
+    for (const measurement of measurements) {
+      const key = measurement.device_id;
+      const existing = deviceMap.get(key);
+      if (!existing || new Date(measurement._time) > new Date(existing._time)) {
+        deviceMap.set(key, measurement);
+      }
+    }
+    return Array.from(deviceMap.values());
+  };
+
+  const latestMeasurements = getLatestMeasurementsByDevice();
+
+  const getAverageValue = (deviceId: string) => {
+    const deviceMeasurements = measurements.filter(
+      (m) => m.device_id === deviceId,
+    );
+    if (deviceMeasurements.length === 0) return 0;
+    const sum = deviceMeasurements.reduce((acc, m) => acc + m._value, 0);
+    return (sum / deviceMeasurements.length).toFixed(1);
+  };
+
   return (
     <div className="flex min-h-screen bg-[#F9FAFB]">
       <Sidebar />
@@ -31,108 +87,145 @@ export default function RealTimeMonitoring() {
         </header>
 
         <div className="p-6 lg:p-8">
-          <div className="mb-6 flex justify-end">
-            <button className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
-              <Clock className="w-4 h-4" />
-              <span>Consulter l'historique</span>
-            </button>
+          <div className="mb-6 flex justify-between items-center">
+            <div>
+              {lastUpdate && (
+                <p className="text-sm text-gray-600">
+                  Dernière mise à jour: {lastUpdate.toLocaleTimeString("fr-FR")}
+                </p>
+              )}
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={loadMeasurements}
+                disabled={isLoading}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-50"
+              >
+                <RefreshCw
+                  className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`}
+                />
+                <span>Actualiser</span>
+              </button>
+              <button className="bg-gray-200 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-300 transition-colors flex items-center gap-2">
+                <Clock className="w-4 h-4" />
+                <span>Historique</span>
+              </button>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <div className="bg-red-50 border-l-4 border-red-500 rounded-lg p-5">
+          {error && (
+            <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
               <div className="flex items-center gap-3">
-                <AlertTriangle className="w-5 h-5 text-red-500" />
+                <AlertTriangle className="w-5 h-5 text-red-600" />
                 <div>
                   <h3 className="font-semibold text-red-900">
-                    Rythme cardiaque élevé
+                    Erreur de chargement
                   </h3>
-                  <p className="text-sm text-red-700">
-                    125 BPM - Attention requise
-                  </p>
+                  <p className="text-sm text-red-700">{error}</p>
                 </div>
               </div>
             </div>
+          )}
 
-            <div className="bg-yellow-50 border-l-4 border-yellow-500 rounded-lg p-5">
-              <div className="flex items-center gap-3">
-                <Activity className="w-5 h-5 text-yellow-600" />
-                <div>
-                  <h3 className="font-semibold text-yellow-900">
-                    Tension artérielle
-                  </h3>
-                  <p className="text-sm text-yellow-700">
-                    145/95 mmHg - Surveillée
-                  </p>
-                </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            {latestMeasurements.length === 0 && !isLoading ? (
+              <div className="col-span-3 bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+                <p className="text-gray-600">
+                  Aucune mesure disponible pour l'instant
+                </p>
               </div>
-            </div>
-
-            <div className="bg-green-50 border-l-4 border-green-500 rounded-lg p-5">
-              <div className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-green-600" />
-                <div>
-                  <h3 className="font-semibold text-green-900">
-                    Température normale
-                  </h3>
-                  <p className="text-sm text-green-700">36.8°C - Optimal</p>
+            ) : (
+              latestMeasurements.slice(0, 3).map((measurement) => (
+                <div
+                  key={measurement.device_id}
+                  className="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-5"
+                >
+                  <div className="flex items-center gap-3">
+                    <Activity className="w-5 h-5 text-blue-600" />
+                    <div>
+                      <h3 className="font-semibold text-blue-900">
+                        Appareil {measurement.device_id}
+                      </h3>
+                      <p className="text-sm text-blue-700">
+                        Valeur: {measurement._value.toFixed(2)} - Mise à jour
+                        active
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
+              ))
+            )}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
-              <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                      <Heart className="w-6 h-6 text-red-600" />
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-semibold text-gray-900">
-                        Rythme Cardiaque
-                      </h2>
-                      <p className="text-sm text-gray-600">Temps réel</p>
-                    </div>
+              {isLoading ? (
+                <>
+                  <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm animate-pulse">
+                    <div className="h-40 bg-gray-200 rounded-lg"></div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-3xl font-bold text-red-600">125</div>
-                    <div className="text-sm text-gray-500">BPM</div>
+                  <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm animate-pulse">
+                    <div className="h-40 bg-gray-200 rounded-lg"></div>
                   </div>
-                </div>
-                <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
-                  <p className="text-gray-400">Graphique du rythme cardiaque</p>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <Droplet className="w-5 h-5 text-blue-600" />
+                </>
+              ) : latestMeasurements.length > 0 ? (
+                latestMeasurements.slice(0, 2).map((measurement, idx) => (
+                  <div
+                    key={`${measurement.device_id}-${idx}`}
+                    className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm"
+                  >
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-12 h-12 ${idx === 0 ? "bg-red-100" : "bg-blue-100"} rounded-lg flex items-center justify-center`}
+                        >
+                          {idx === 0 ? (
+                            <Heart
+                              className={`w-6 h-6 ${idx === 0 ? "text-red-600" : "text-blue-600"}`}
+                            />
+                          ) : (
+                            <Droplet className="w-5 h-5 text-blue-600" />
+                          )}
+                        </div>
+                        <div>
+                          <h2 className="text-lg font-semibold text-gray-900">
+                            {idx === 0 ? "Appareil" : "Appareils"}{" "}
+                            {measurement.device_id}
+                          </h2>
+                          <p className="text-sm text-gray-600">Temps réel</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div
+                          className={`text-3xl font-bold ${idx === 0 ? "text-red-600" : "text-blue-600"}`}
+                        >
+                          {measurement._value.toFixed(1)}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {measurement._measurement}
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <h2 className="text-lg font-semibold text-gray-900">
-                        Tension Artérielle
-                      </h2>
-                      <p className="text-sm text-gray-600">
-                        Systolique / Diastolique
+                    <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
+                      <p className="text-gray-400">
+                        Données disponibles -{" "}
+                        {
+                          measurements.filter(
+                            (m) => m.device_id === measurement.device_id,
+                          ).length
+                        }{" "}
+                        mesures
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-blue-600">
-                      145/95
-                    </div>
-                    <div className="text-sm text-gray-500">mmHg</div>
-                  </div>
-                </div>
-                <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
-                  <p className="text-gray-400">
-                    Graphique de tension artérielle
+                ))
+              ) : (
+                <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                  <p className="text-center text-gray-600">
+                    Aucune donnée à afficher
                   </p>
                 </div>
-              </div>
+              )}
             </div>
 
             <div className="space-y-6">
@@ -142,11 +235,30 @@ export default function RealTimeMonitoring() {
                     <Thermometer className="w-5 h-5 text-orange-600" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">Température</h3>
-                    <p className="text-sm text-gray-600">Corporelle</p>
+                    <h3 className="font-semibold text-gray-900">
+                      Température Moyenne
+                    </h3>
+                    <p className="text-sm text-gray-600">Dernière heure</p>
                   </div>
                 </div>
-                <div className="h-48 bg-gray-50 rounded-lg"></div>
+                <div className="h-48 bg-gray-50 rounded-lg flex items-center justify-center">
+                  {measurements.length > 0 ? (
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-orange-600">
+                        {(
+                          measurements.reduce((acc, m) => acc + m._value, 0) /
+                          measurements.length
+                        ).toFixed(1)}
+                        °C
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {measurements.length} mesures
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-gray-400">Aucune donnée</p>
+                  )}
+                </div>
               </div>
 
               <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
@@ -156,44 +268,57 @@ export default function RealTimeMonitoring() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900">
-                      Saturation O2
+                      Appareils Actifs
                     </h3>
-                    <p className="text-sm text-gray-600">Oxygène sanguin</p>
+                    <p className="text-sm text-gray-600">
+                      Connectés maintenant
+                    </p>
                   </div>
                 </div>
-                <div className="h-48 bg-gray-50 rounded-lg"></div>
+                <div className="h-48 bg-gray-50 rounded-lg flex items-center justify-center">
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-cyan-600">
+                      {latestMeasurements.length}
+                    </p>
+                    <p className="text-sm text-gray-600">appareils</p>
+                  </div>
+                </div>
               </div>
 
               <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
                 <h3 className="font-semibold text-gray-900 mb-4">
-                  Résumé d'activité
+                  Résumé des Appareils
                 </h3>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Activity className="w-4 h-4 text-green-600" />
-                      <span className="text-sm text-gray-700">
-                        Pas aujourd'hui
-                      </span>
-                    </div>
-                    <span className="font-semibold text-gray-900">8,542</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Flame className="w-4 h-4 text-red-600" />
-                      <span className="text-sm text-gray-700">
-                        Calories brûlées
-                      </span>
-                    </div>
-                    <span className="font-semibold text-gray-900">324</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Bed className="w-5 h-5 text-purple-600" />
-                      <span className="text-sm text-gray-700">Sommeil</span>
-                    </div>
-                    <span className="font-semibold text-gray-900">7h 23m</span>
-                  </div>
+                <div className="space-y-4 max-h-64 overflow-y-auto">
+                  {latestMeasurements.length === 0 ? (
+                    <p className="text-sm text-gray-600 text-center py-4">
+                      Aucun appareil actif
+                    </p>
+                  ) : (
+                    latestMeasurements.map((measurement) => (
+                      <div
+                        key={measurement.device_id}
+                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Activity className="w-4 h-4 text-blue-600" />
+                          <div>
+                            <span className="text-sm font-medium text-gray-900">
+                              Device {measurement.device_id}
+                            </span>
+                            <p className="text-xs text-gray-600">
+                              {new Date(measurement._time).toLocaleTimeString(
+                                "fr-FR",
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                        <span className="font-semibold text-gray-900">
+                          {measurement._value.toFixed(2)}
+                        </span>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             </div>
