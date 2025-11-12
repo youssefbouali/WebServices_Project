@@ -53,6 +53,8 @@ export default function DeviceRegistration() {
       await createDevice({
         name: formData.name,
         type: formData.type,
+        manufacturer: formData.manufacturer,
+        notes: formData.notes,
       });
       toast({
         title: "Succès",

@@ -35,8 +35,9 @@ export default function DeviceDashboard() {
   const [viewingDevice, setViewingDevice] = useState<Device | null>(null);
   const [editingDevice, setEditingDevice] = useState<Device | null>(null);
   const [editFormData, setEditFormData] = useState({
+    name: "",
+    type: "",
     status: "inactive" as "active" | "inactive",
-    last_value: 0,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -51,8 +52,12 @@ export default function DeviceDashboard() {
       const data = await getDevices();
       setDevices(data);
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to load devices";
+      let message = "Failed to load devices";
+      if (err instanceof Error) {
+        message = err.message;
+      } else if (err && typeof err === "object" && "message" in err) {
+        message = String((err as any).message);
+      }
       setError(message);
     } finally {
       setIsLoading(false);
@@ -66,8 +71,9 @@ export default function DeviceDashboard() {
   const handleEditDevice = (device: Device) => {
     setEditingDevice(device);
     setEditFormData({
+      name: device.name,
+      type: device.type,
       status: device.status,
-      last_value: device.last_value,
     });
   };
 
@@ -441,6 +447,43 @@ export default function DeviceDashboard() {
             <div className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-gray-700">
+                  Nom de l'appareil
+                </label>
+                <input
+                  type="text"
+                  value={editFormData.name}
+                  onChange={(e) =>
+                    setEditFormData({
+                      ...editFormData,
+                      name: e.target.value,
+                    })
+                  }
+                  className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">
+                  Type d'appareil
+                </label>
+                <select
+                  value={editFormData.type}
+                  onChange={(e) =>
+                    setEditFormData({
+                      ...editFormData,
+                      type: e.target.value,
+                    })
+                  }
+                  className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="sensor">Capteur</option>
+                  <option value="monitor">Moniteur</option>
+                  <option value="device">Appareil Médical</option>
+                  <option value="pump">Pompe</option>
+                  <option value="ventilator">Respirateur</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">
                   État
                 </label>
                 <select
@@ -456,23 +499,6 @@ export default function DeviceDashboard() {
                   <option value="active">Actif</option>
                   <option value="inactive">Inactif</option>
                 </select>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700">
-                  Dernière valeur
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={editFormData.last_value}
-                  onChange={(e) =>
-                    setEditFormData({
-                      ...editFormData,
-                      last_value: parseFloat(e.target.value),
-                    })
-                  }
-                  className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
               </div>
             </div>
           )}

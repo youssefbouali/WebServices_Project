@@ -18,8 +18,20 @@ export interface QueryResult {
   }>;
 }
 
-const INFLUXDB_URL =
-  import.meta.env.VITE_INFLUXDB_URL || "http://localhost:8086";
+/**
+ * Extract host from VITE_DEVICES and use port 8086 for InfluxDB
+ */
+function getInfluxDBURL(): string {
+  const devicesUrl = import.meta.env.VITE_DEVICES || "http://localhost:8000";
+  try {
+    const url = new URL(devicesUrl);
+    return `${url.protocol}//${url.hostname}:8086`;
+  } catch {
+    return "http://localhost:8086";
+  }
+}
+
+const INFLUXDB_URL = getInfluxDBURL();
 const INFLUXDB_ORG = import.meta.env.VITE_INFLUXDB_ORG || "my-org";
 const INFLUXDB_BUCKET = import.meta.env.VITE_INFLUXDB_BUCKET || "iot_data";
 const INFLUXDB_TOKEN = import.meta.env.VITE_INFLUXDB_TOKEN || "my-token";

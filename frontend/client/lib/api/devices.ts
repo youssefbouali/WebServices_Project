@@ -12,11 +12,14 @@ export interface Device {
 export interface CreateDeviceRequest {
   name: string;
   type: string;
+  manufacturer?: string;
+  notes?: string;
 }
 
 export interface UpdateDeviceRequest {
+  name?: string;
+  type?: string;
   status?: "active" | "inactive";
-  last_value?: number;
 }
 
 /**
