@@ -6,7 +6,7 @@ import { createServer } from "./server";
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
-    port: 3000,
+    port: 8080,
     allowedHosts: ["eduapp.mywire.org", "localhost"],
     fs: {
       allow: [
