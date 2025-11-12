@@ -3,29 +3,20 @@ import path from "path";
 import { defineConfig, Plugin } from "vite";
 import { createServer } from "./server";
 
-// https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 3000,
-	allowedHosts: ["eduapp.mywire.org", "localhost"],
+    allowedHosts: ["eduapp.mywire.org", "localhost"],
     fs: {
       allow: [
-        // Allow standard app sources
         path.resolve(__dirname, "./client"),
         path.resolve(__dirname, "./shared"),
-        // Allow project root so Vite can serve index.html
-        path.resolve(__dirname, "."),
+        path.resolve(__dirname, "."), // project root
+        path.resolve(__dirname, "../"), // one level above
       ],
       deny: [".env", ".env.*", "*.{crt,pem}", "**/.git/**", "server/**"],
     },
-        "./",
-        "./client",
-        "./shared",
-        "../",         // autorise un niveau au-dessus si besoin
-      ],
-      deny: [".env", ".env.*", "*.{crt,pem}", "**/.git/**"],
-},
   },
   build: {
     outDir: "dist/spa",
@@ -42,11 +33,9 @@ export default defineConfig(({ mode }) => ({
 function expressPlugin(): Plugin {
   return {
     name: "express-plugin",
-    apply: "serve", // Only apply during development (serve mode)
+    apply: "serve",
     configureServer(server) {
       const app = createServer();
-
-      // Add Express app as middleware to Vite dev server
       server.middlewares.use(app);
     },
   };
