@@ -1,4 +1,4 @@
-package com.example.suivipatients.dto;
+package com.example.suivipatients.dtos;
 
 import lombok.Data;
 import jakarta.validation.constraints.NotNull;

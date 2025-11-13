@@ -1,8 +1,8 @@
 package com.example.suivipatients.controllers;
 
+import com.example.suivipatients.dtos.TreatmentRequest;
 import com.example.suivipatients.models.SuiviTraitement;
 import com.example.suivipatients.services.SuiviTraitementService;
-import com.example.suivipatients.dto.TreatmentRequest;
 import com.example.suivipatients.dto.TreatmentUpdateRequest;
 import com.example.suivipatients.dto.ValidateDoseRequest;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +17,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/treatments")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "http://localhost:3000")
 public class SuiviTraitementController {
 
     private final SuiviTraitementService traitementService;
