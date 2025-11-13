@@ -165,6 +165,7 @@ export default function DeviceDashboard() {
   const displayDevices = devices.map((device) => ({
     id: `#DEV${device.id.toString().padStart(3, "0")}`,
     type: device.type,
+    name: device.name,
     patient: `Patient ${device.id}`,
     status: device.status === "active" ? "Actif" : "Inactif",
     statusColor:
@@ -172,6 +173,7 @@ export default function DeviceDashboard() {
         ? "bg-green-100 text-green-800"
         : "bg-red-100 text-red-800",
     lastActivity: new Date(device.last_reading).toLocaleDateString("fr-FR"),
+    original: device,
   }));
 
   return (
@@ -249,6 +251,9 @@ export default function DeviceDashboard() {
                       ID Appareil
                     </th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                      Nom
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
                       Type
                     </th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
@@ -269,7 +274,7 @@ export default function DeviceDashboard() {
                   {isLoading ? (
                     <tr>
                       <td
-                        colSpan={6}
+                        colSpan={7}
                         className="px-6 py-8 text-center text-gray-600"
                       >
                         Chargement des appareils...
@@ -278,7 +283,7 @@ export default function DeviceDashboard() {
                   ) : error ? (
                     <tr>
                       <td
-                        colSpan={6}
+                        colSpan={7}
                         className="px-6 py-8 text-center text-red-600"
                       >
                         Erreur: {error}
@@ -287,7 +292,7 @@ export default function DeviceDashboard() {
                   ) : displayDevices.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={6}
+                        colSpan={7}
                         className="px-6 py-8 text-center text-gray-600"
                       >
                         Aucun appareil trouvé
@@ -298,6 +303,9 @@ export default function DeviceDashboard() {
                       <tr key={device.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 text-sm font-medium text-gray-900">
                           {device.id}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          {device.name}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-900">
                           {device.type}
@@ -318,13 +326,13 @@ export default function DeviceDashboard() {
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
                             <button
-                              onClick={() => handleViewDevice(device)}
+                              onClick={() => handleViewDevice(device.original)}
                               className="text-blue-600 hover:text-blue-700"
                             >
                               <Eye className="w-5 h-5" />
                             </button>
                             <button
-                              onClick={() => handleEditDevice(device)}
+                              onClick={() => handleEditDevice(device.original)}
                               className="text-gray-600 hover:text-gray-700"
                             >
                               <Edit className="w-4 h-4" />
