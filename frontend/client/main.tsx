@@ -12,6 +12,7 @@ import Index from "./pages/Index";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import DeviceDashboard from "./pages/DeviceDashboard";
+import DevicesRedirect from "./components/DevicesRedirect";
 import AlertsManagement from "./pages/AlertsManagement";
 import RealTimeMonitoring from "./pages/RealTimeMonitoring";
 import DeviceRegistration from "./pages/DeviceRegistration";
@@ -55,8 +56,19 @@ const Root = () => (
                 </ProtectedRoute>
               }
             />
+            <Route path="/devices" element={<DevicesRedirect />} />
+
             <Route
-              path="/devices"
+              path="/patient/devices"
+              element={
+                <ProtectedRoute>
+                  <DeviceDashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/doctor/devices"
               element={
                 <ProtectedRoute>
                   <DeviceDashboard />
