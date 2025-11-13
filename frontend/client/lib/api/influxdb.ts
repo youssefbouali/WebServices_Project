@@ -50,6 +50,7 @@ export async function queryMeasurements(
         headers: {
           Authorization: `Token ${INFLUXDB_TOKEN}`,
           "Content-Type": "application/json",
+          Accept: "application/csv",
         },
         body: JSON.stringify({ query }),
       },
@@ -59,8 +60,8 @@ export async function queryMeasurements(
       throw new Error(`HTTP ${response.status}: Failed to query InfluxDB`);
     }
 
-    const data = await response.json();
-    return parseInfluxDBResponse(data);
+    const csv = await response.text();
+    return parseInfluxCSV(csv);
   } catch (error) {
     console.error("InfluxDB query error:", error);
     throw error;
@@ -95,40 +96,98 @@ export async function getDeviceMeasurements(
 }
 
 /**
- * Parse InfluxDB API v2 response format to flat array
+ * Parse annotated CSV returned by InfluxDB v2 /api/v2/query
  */
-function parseInfluxDBResponse(response: any): MeasurementData[] {
-  const results: MeasurementData[] = [];
+function parseInfluxCSV(csv: string): MeasurementData[] {
+  const lines = csv.split(/\r?\n/).filter((l) => l.length > 0);
+  const dataLines: string[] = [];
+  let header: string[] | null = null;
 
-  if (!response || !response.results || response.results.length === 0) {
-    return results;
+  for (const line of lines) {
+    if (line.startsWith("#")) continue; // skip metadata lines (#datatype, #group, #default)
+    if (!header) {
+      header = parseCSVLine(line);
+      continue;
+    }
+    dataLines.push(line);
   }
 
-  for (const result of response.results) {
-    if (!result.series) continue;
-
-    for (const serie of result.series) {
-      const { columns, values, tags } = serie;
-
-      if (!columns || !values) continue;
-
-      const timeIndex = columns.indexOf("time");
-      const valueIndex = columns.indexOf("value");
-
-      for (const row of values) {
-        if (timeIndex >= 0 && valueIndex >= 0) {
-          results.push({
-            _time: String(row[timeIndex]),
-            _value: Number(row[valueIndex]),
-            device_id: tags?.device_id || "unknown",
-            _measurement: tags?.["_measurement"] || "device_measurement",
-          });
-        }
-      }
+  // Handle case where InfluxDB returned header and row values on the same line
+  // e.g. ",result,table,_start,_stop,_time,_value,_field,_measurement,device_id ,_result,0,2025-..."
+  // In that situation `lines` will be a single non-comment line containing both header names and values.
+  if (header && dataLines.length === 0) {
+    // If header contains an ISO timestamp token we can split header into headerNames and the data values
+    const isoIndex = header.findIndex((tok) =>
+      /^\d{4}-\d{2}-\d{2}T/.test(String(tok)),
+    );
+    if (isoIndex > 0) {
+      const headerNames = header.slice(0, isoIndex).map((s) => String(s));
+      const values = header.slice(isoIndex).map((s) => String(s));
+      // Build a single data line from values using commas (we already have parsed tokens)
+      header = headerNames;
+      dataLines.push(values.join(","));
     }
   }
 
-  return results;
+  if (!header) return [];
+
+  const colIndex = (name: string) => header!.indexOf(name);
+  const idxTime = colIndex("_time");
+  const idxValue = colIndex("_value");
+  const idxDevice = colIndex("device_id");
+  const idxMeas = colIndex("_measurement");
+  const idxField = colIndex("_field");
+
+  const out: MeasurementData[] = [];
+
+  for (const line of dataLines) {
+    const cols = parseCSVLine(line);
+    const time = idxTime >= 0 ? cols[idxTime] : undefined;
+    const value = idxValue >= 0 ? cols[idxValue] : undefined;
+    const device = idxDevice >= 0 ? cols[idxDevice] : undefined;
+    const meas = idxMeas >= 0 ? cols[idxMeas] : undefined;
+    const field = idxField >= 0 ? cols[idxField] : undefined;
+
+    if (time !== undefined && value !== undefined) {
+      out.push({
+        _time: String(time),
+        _value: Number(value),
+        device_id: device ?? "unknown",
+        _measurement: meas ?? "device_measurement",
+        _field: field,
+      });
+    }
+  }
+
+  return out;
+}
+
+// Minimal CSV parser that handles commas within quoted fields and escaped quotes
+function parseCSVLine(line: string): string[] {
+  const result: string[] = [];
+  let current = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+
+    if (char === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        current += '"';
+        i++; // skip escaped quote
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === "," && !inQuotes) {
+      result.push(current);
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+
+  result.push(current);
+  return result;
 }
 
 /**

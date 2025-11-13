@@ -1,20 +1,33 @@
 import { Link, useLocation } from "react-router-dom";
-import { Activity, Calendar, AlertTriangle, TrendingUp } from "lucide-react";
+import {
+  Activity,
+  Calendar,
+  AlertTriangle,
+  TrendingUp,
+  Tablet,
+} from "lucide-react";
 
 export default function PatientSidebar() {
   const location = useLocation();
 
   const menuItems = [
     { path: "/patient-dashboard", label: "Tableau de Bord", icon: Activity },
+    { path: "/devices", label: "Mes Appareils", icon: Tablet },
     { path: "/patient/rendez-vous", label: "Mes Rendez-vous", icon: Calendar },
     { path: "/patient/alertes", label: "Mes Alertes", icon: AlertTriangle },
-    { path: "/patient/suivi-traitements", label: "Suivi Traitements", icon: TrendingUp },
+    {
+      path: "/patient/suivi-traitements",
+      label: "Suivi Traitements",
+      icon: TrendingUp,
+    },
   ];
 
   return (
     <aside className="w-[250px] bg-[#2563EB] min-h-screen flex-shrink-0 fixed left-0 top-0 z-50">
       <div className="px-10 pt-3 pb-2">
-        <h1 className="text-white text-[24px] font-bold leading-tight">HealthTrack</h1>
+        <h1 className="text-white text-[24px] font-bold leading-tight">
+          HealthTrack
+        </h1>
         <p className="text-[#93C5FD] text-[12px] mt-1">Espace Patient</p>
       </div>
 

@@ -25,10 +25,12 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/lib/auth";
 
 export default function DeviceDashboard() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [devices, setDevices] = useState<Device[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -180,10 +182,20 @@ export default function DeviceDashboard() {
         <header className="bg-white border-b border-gray-200 shadow-sm px-8 py-6">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold text-gray-900">
-              Tableau de bord des appareils
+              {user?.role === "DOCTOR"
+                ? "Tableau de bord des appareils (Patients)"
+                : user?.role === "PATIENT"
+                  ? "Mes Appareils"
+                  : "Tableau de bord des appareils"}
             </h1>
             <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-500">Admin</span>
+              <span className="text-sm text-gray-500">
+                {user?.role === "DOCTOR"
+                  ? "Docteur"
+                  : user?.role === "PATIENT"
+                    ? "Patient"
+                    : "Admin"}
+              </span>
               <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
                 <Users className="w-5 h-5 text-white" />
               </div>
