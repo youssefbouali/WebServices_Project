@@ -1,5 +1,12 @@
 import { Link, useLocation } from "react-router-dom";
-import { Activity, Users, Tablet, Calendar, TrendingUp } from "lucide-react";
+import {
+  Activity,
+  Users,
+  Tablet,
+  Calendar,
+  TrendingUp,
+  AlertTriangle,
+} from "lucide-react";
 
 export default function Sidebar() {
   const location = useLocation();
@@ -8,6 +15,7 @@ export default function Sidebar() {
     { path: "/dashboard", label: "Tableau de Bord", icon: Activity },
     { path: "/profiles", label: "Profils", icon: Users },
     { path: "/devices", label: "Appareils", icon: Tablet },
+    { path: "/alerts", label: "Alertes", icon: AlertTriangle },
     { path: "/appointments", label: "Planification", icon: Calendar },
     {
       path: "/treatment-tracking",
