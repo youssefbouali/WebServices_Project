@@ -27,13 +27,16 @@ export class ProfileController {
       const dto: CreateProfileDto = req.body;
       const profile = await this.service.create(dto);
       const token = generateToken(profile.id.toString(), profile.email, profile.role);
-      
-      res.status(201).json({
-        profile: this.toResponseDto(profile),
-        token,
-      });
+      res.status(201).json({ profile: this.toResponseDto(profile), token });
     } catch (error: any) {
-      res.status(400).json({ error: error.message });
+      if (Array.isArray(error)) {
+        const details = error.map(e => ({
+          property: e.property,
+          constraints: e.constraints,
+        }));
+        return res.status(422).json({ error: "Validation failed", details });
+      }
+      return res.status(400).json({ error: error?.message || "Bad Request" });
     }
   }
 

@@ -2,7 +2,7 @@ import { API_BASE_URLS, apiFetch } from "./config";
 
 export interface Treatment {
   id: number;
-  patientId: number;
+  patientId: string;
   medicament: string;
   dosage: string;
   frequence: string;
@@ -16,7 +16,7 @@ export interface Treatment {
 }
 
 export interface CreateTreatmentRequest {
-  patientId: number;
+  patientId: string;
   medicament: string;
   dosage: string;
   frequence: string;
@@ -69,7 +69,7 @@ export async function getTreatments(): Promise<Treatment[]> {
  * Get treatments by patient
  */
 export async function getPatientTreatments(
-  patientId: number,
+  patientId: string,
 ): Promise<Treatment[]> {
   return apiFetch<Treatment[]>(
     `${API_BASE_URLS.TREATMENTS}/treatments?patientId=${patientId}`,

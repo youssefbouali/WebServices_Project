@@ -3,8 +3,8 @@ package com.example.suivipatients.controllers;
 import com.example.suivipatients.dtos.TreatmentRequest;
 import com.example.suivipatients.models.SuiviTraitement;
 import com.example.suivipatients.services.SuiviTraitementService;
-import com.example.suivipatients.dto.TreatmentUpdateRequest;
-import com.example.suivipatients.dto.ValidateDoseRequest;
+import com.example.suivipatients.dtos.TreatmentUpdateRequest;
+import com.example.suivipatients.dtos.ValidateDoseRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -42,7 +42,7 @@ public class SuiviTraitementController {
     }
 
     @GetMapping(params = "patientId")
-    public ResponseEntity<List<SuiviTraitement>> getTreatmentsByPatient(@RequestParam Long patientId) {
+    public ResponseEntity<List<SuiviTraitement>> getTreatmentsByPatient(@RequestParam String patientId) {
         return ResponseEntity.ok(traitementService.getTreatmentsByPatient(patientId));
     }
 

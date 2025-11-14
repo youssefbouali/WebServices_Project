@@ -2,21 +2,35 @@ import { useState, useEffect } from "react";
 import Sidebar from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Activity, ChevronLeft, CheckCircle, XCircle } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
-import { getPatientTreatments, Treatment } from "@/lib/api/treatments";
+import { getPatientTreatments, Treatment, validateDose, sendReminder } from "@/lib/api/treatments";
 import { getProfileById } from "@/lib/api/profiles";
+import { toast } from "@/components/ui/use-toast";
 
 export default function TreatmentTracking() {
   const [treatments, setTreatments] = useState<Treatment[]>([]);
   const [patient, setPatient] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isValidating, setIsValidating] = useState(false);
+  const [isSendingReminder, setIsSendingReminder] = useState(false);
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const CIRC = 2 * Math.PI * 40;
+  const computeProgress = (t?: Treatment) => {
+    if (!t) return 0;
+    const start = new Date(t.dateDebut).getTime();
+    const end = new Date(t.dateFin).getTime();
+    const now = Date.now();
+    if (end <= start) return 0;
+    const pct = ((now - start) / (end - start)) * 100;
+    return Math.max(0, Math.min(100, pct));
+  };
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [user, searchParams]);
 
   const loadData = async () => {
     setIsLoading(true);
@@ -26,12 +40,11 @@ export default function TreatmentTracking() {
         throw new Error("User not found");
       }
 
-      // Load patient info
-      const patientData = await getProfileById(user.id);
+      const pid = searchParams.get("patientId") ?? user.id;
+      const patientData = await getProfileById(pid);
       setPatient(patientData);
 
-      // Load treatments for patient
-      const treatmentsData = await getPatientTreatments(parseInt(user.id));
+      const treatmentsData = await getPatientTreatments(pid);
       setTreatments(treatmentsData);
     } catch (err) {
       const message =
@@ -39,6 +52,39 @@ export default function TreatmentTracking() {
       setError(message);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleValidateDose = async () => {
+    const current = treatments.find((t) => t.statut === "ACTIF");
+    if (!current) return;
+    setIsValidating(true);
+    try {
+      await validateDose(current.id, { datePrise: new Date().toISOString() });
+      toast({ title: "Prise validée", description: "La prise a été validée avec succès." });
+      await loadData();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Échec de validation de la prise";
+      setError(message);
+      toast({ title: "Erreur", description: message });
+    } finally {
+      setIsValidating(false);
+    }
+  };
+
+  const handleSendReminder = async () => {
+    const current = treatments.find((t) => t.statut === "ACTIF");
+    if (!current) return;
+    setIsSendingReminder(true);
+    try {
+      await sendReminder(current.id);
+      toast({ title: "Rappel envoyé", description: "Le rappel a été envoyé." });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Échec de l'envoi du rappel";
+      setError(message);
+      toast({ title: "Erreur", description: message });
+    } finally {
+      setIsSendingReminder(false);
     }
   };
 
@@ -142,15 +188,15 @@ export default function TreatmentTracking() {
                             stroke="#10B981"
                             strokeWidth="8"
                             fill="none"
-                            strokeDasharray="251.2"
-                            strokeDashoffset="37.68"
+                            strokeDasharray={CIRC}
+                            strokeDashoffset={CIRC * (1 - computeProgress(currentTreatment) / 100)}
                             transform="rotate(-90 44 44)"
                             strokeLinecap="round"
                           />
                         </svg>
                         <div className="absolute inset-0 flex items-center justify-center">
                           <span className="text-xl font-bold text-[#10B981]">
-                            85%
+                            {Math.round(computeProgress(currentTreatment))}%
                           </span>
                         </div>
                       </div>
@@ -165,90 +211,35 @@ export default function TreatmentTracking() {
                   Historique des Prises
                 </h3>
 
-                <div className="space-y-4 relative before:absolute before:left-3 before:top-6 before:bottom-6 before:w-0.5 before:bg-[#CBD5E1]">
-                  {/* Completed */}
-                  <div className="flex items-start gap-4 relative">
-                    <CheckCircle className="w-6 h-6 text-[#10B981] flex-shrink-0 relative z-10 bg-white" />
-                    <div className="flex-1 bg-[#F0FDF4] border border-[#BBF7D0] rounded-lg p-4">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-bold text-sm text-[#15803D]">
-                            Prise effectuée
-                          </p>
-                          <p className="text-xs text-[#166534] mt-1">
-                            Aujourd'hui - 08:00
-                          </p>
+                <div className="space-y-4">
+                  {treatments.map((t) => (
+                    <div key={t.id} className="flex items-start gap-4">
+                      {t.suiviCorrect ? (
+                        <CheckCircle className="w-6 h-6 text-[#10B981] flex-shrink-0" />
+                      ) : (
+                        <XCircle className="w-6 h-6 text-[#EF4444] flex-shrink-0" />
+                      )}
+                      <div className="flex-1 bg-white border border-[#E2E8F0] rounded-lg p-4">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="font-bold text-sm text-[#1E293B]">
+                              {t.medicament} {t.dosage}
+                            </p>
+                            <p className="text-xs text-[#64748B] mt-1">
+                              {t.frequence} • {new Date(t.dateDebut).toLocaleString()} → {new Date(t.dateFin).toLocaleString()}
+                            </p>
+                          </div>
+                          <span className="px-3 py-1 bg-[#F1F5F9] text-[#475569] text-xs rounded-full">
+                            {t.statut}
+                          </span>
                         </div>
-                        <span className="px-3 py-1 bg-[#DCFCE7] text-[#166534] text-xs rounded-full">
-                          Validé
-                        </span>
                       </div>
                     </div>
-                  </div>
-
-                  {/* Completed */}
-                  <div className="flex items-start gap-4 relative">
-                    <CheckCircle className="w-6 h-6 text-[#10B981] flex-shrink-0 relative z-10 bg-white" />
-                    <div className="flex-1 bg-[#F0FDF4] border border-[#BBF7D0] rounded-lg p-4">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-bold text-sm text-[#15803D]">
-                            Prise effectuée
-                          </p>
-                          <p className="text-xs text-[#166534] mt-1">
-                            Hier - 20:00
-                          </p>
-                        </div>
-                        <span className="px-3 py-1 bg-[#DCFCE7] text-[#166534] text-xs rounded-full">
-                          Validé
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Missed */}
-                  <div className="flex items-start gap-4 relative">
-                    <XCircle className="w-6 h-6 text-[#EF4444] flex-shrink-0 relative z-10 bg-white" />
-                    <div className="flex-1 bg-[#FEF2F2] border border-[#FECACA] rounded-lg p-4">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-bold text-sm text-[#DC2626]">
-                            Prise manquée
-                          </p>
-                          <p className="text-xs text-[#991B1B] mt-1">
-                            Hier - 14:00
-                          </p>
-                        </div>
-                        <span className="px-3 py-1 bg-[#FEE2E2] text-[#991B1B] text-xs rounded-full">
-                          Manqué
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Completed */}
-                  <div className="flex items-start gap-4 relative">
-                    <CheckCircle className="w-6 h-6 text-[#10B981] flex-shrink-0 relative z-10 bg-white" />
-                    <div className="flex-1 bg-[#F0FDF4] border border-[#BBF7D0] rounded-lg p-4">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-bold text-sm text-[#15803D]">
-                            Prise effectuée
-                          </p>
-                          <p className="text-xs text-[#166534] mt-1">
-                            Avant-hier - 08:00
-                          </p>
-                        </div>
-                        <span className="px-3 py-1 bg-[#DCFCE7] text-[#166534] text-xs rounded-full">
-                          Validé
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+                  ))}
                 </div>
 
-                <Button className="w-full mt-6 bg-[#10B981] hover:bg-[#059669] text-white h-11">
-                  ✓ Valider la Prise
+                <Button onClick={handleValidateDose} disabled={isValidating || !currentTreatment} className="w-full mt-6 bg-[#10B981] hover:bg-[#059669] text-white h-11">
+                  {isValidating ? "Validation..." : "✓ Valider la Prise"}
                 </Button>
               </div>
             </div>
@@ -261,35 +252,10 @@ export default function TreatmentTracking() {
                   Rappels à Venir
                 </h3>
                 <div className="space-y-3">
-                  <div className="bg-[#EFF6FF] border border-[#BFDBFE] rounded-lg p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-6 h-6 rounded-full bg-[#3B82F6] flex items-center justify-center flex-shrink-0">
-                        <div className="w-2 h-2 bg-white rounded-sm"></div>
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-[#1E40AF]">
-                          Aujourd'hui 14:00
-                        </p>
-                        <p className="text-xs text-[#1E40AF] mt-1">
-                          Prise de midi
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="bg-[#F8FAFC] border border-[#CBD5E1] rounded-lg p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-6 h-6 rounded-full bg-[#64748B] flex items-center justify-center flex-shrink-0">
-                        <div className="w-2 h-2 bg-white rounded-sm"></div>
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-[#475569]">
-                          Aujourd'hui 20:00
-                        </p>
-                        <p className="text-xs text-[#64748B] mt-1">
-                          Prise du soir
-                        </p>
-                      </div>
-                    </div>
+                  <div className="flex justify-end">
+                    <Button onClick={handleSendReminder} disabled={isSendingReminder || !currentTreatment} className="bg-[#2563EB] hover:bg-[#1E40AF] text-white">
+                      {isSendingReminder ? "Envoi..." : "Envoyer un rappel"}
+                    </Button>
                   </div>
                 </div>
               </div>

@@ -1,5 +1,6 @@
 import 'reflect-metadata';
 import express from 'express';
+import type { Request, Response } from 'express';
 import cors from 'cors';
 import { AppDataSource } from './data-source';
 import { Profile } from './entities/Profile';
@@ -20,7 +21,7 @@ export async function createApp() {
   app.use(express.urlencoded({ extended: true }));
 
   // Health check
-  app.get('/health', (req, res) => {
+  app.get('/health', (req: Request, res: Response) => {
     res.json({ status: 'ok', service: 'profile-service' });
   });
 

@@ -12,7 +12,7 @@ import java.util.List;
 @Repository
 public interface SuiviTraitementRepository extends JpaRepository<SuiviTraitement, Long> {
 
-    List<SuiviTraitement> findByPatientId(Long patientId);
+    List<SuiviTraitement> findByPatientId(String patientId);
     List<SuiviTraitement> findByStatut(String statut);
     List<SuiviTraitement> findBySuiviCorrectFalse();
 
@@ -20,5 +20,5 @@ public interface SuiviTraitementRepository extends JpaRepository<SuiviTraitement
     List<SuiviTraitement> findTraitementsActifs(@Param("now") LocalDateTime now);
 
     @Query("SELECT COUNT(t) FROM SuiviTraitement t WHERE t.patientId = :patientId AND t.statut = 'ACTIF'")
-    Long countTraitementsActifsByPatient(@Param("patientId") Long patientId);
+    Long countTraitementsActifsByPatient(@Param("patientId") String patientId);
 }

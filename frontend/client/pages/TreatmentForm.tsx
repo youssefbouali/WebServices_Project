@@ -55,7 +55,7 @@ export default function TreatmentForm() {
       }
 
       await createTreatment({
-        patientId: parseInt(formData.patientId),
+        patientId: formData.patientId,
         medicament: formData.medicament,
         dosage: formData.dosage,
         frequence: formData.frequence,
@@ -64,7 +64,7 @@ export default function TreatmentForm() {
         instructions: formData.instructions,
       });
 
-      navigate("/treatment-tracking");
+      navigate(`/treatment-tracking?patientId=${formData.patientId}`);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Failed to create treatment";

@@ -14,8 +14,8 @@ public class SuiviTraitement {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private Long patientId;
+    @Column(nullable = false, length = 64)
+    private String patientId;
 
     @Column(nullable = false)
     private String medicament;

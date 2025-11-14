@@ -18,7 +18,7 @@ public class SuiviTraitementService {
 
     private final SuiviTraitementRepository traitementRepository;
 
-    public SuiviTraitement createTreatment(Long patientId, String medicament, String dosage,
+    public SuiviTraitement createTreatment(String patientId, String medicament, String dosage,
                                            String frequence, LocalDateTime dateDebut,
                                            LocalDateTime dateFin, String instructions) {
 
@@ -43,8 +43,8 @@ public class SuiviTraitementService {
     }
 
     @Transactional(readOnly = true)
-    public List<SuiviTraitement> getTreatmentsByPatient(Long patientId) {
-        if (patientId == null) {
+    public List<SuiviTraitement> getTreatmentsByPatient(String patientId) {
+        if (patientId == null || patientId.trim().isEmpty()) {
             throw new IllegalArgumentException("L'ID du patient est requis");
         }
         return traitementRepository.findByPatientId(patientId);
@@ -118,9 +118,9 @@ public class SuiviTraitementService {
         return (long) traitementRepository.findBySuiviCorrectFalse().size();
     }
 
-    private void validateTreatmentData(Long patientId, String medicament,
+    private void validateTreatmentData(String patientId, String medicament,
                                        LocalDateTime dateDebut, LocalDateTime dateFin) {
-        if (patientId == null) {
+        if (patientId == null || patientId.trim().isEmpty()) {
             throw new IllegalArgumentException("L'ID du patient est requis");
         }
         if (medicament == null || medicament.trim().isEmpty()) {

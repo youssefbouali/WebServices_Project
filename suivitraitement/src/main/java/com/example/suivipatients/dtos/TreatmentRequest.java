@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 @Data
 public class TreatmentRequest {
     @NotNull
-    private Long patientId;
+    private String patientId;
     @NotNull
     private String medicament;
     private String dosage;

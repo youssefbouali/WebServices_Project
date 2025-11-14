@@ -1,17 +1,17 @@
 # Use Node 21
-FROM node:21-alpine
+FROM node:20.19.0-alpine
 
 # Set working directory
 WORKDIR /app
 
-# Install pnpm
-RUN npm install -g pnpm@10.14.0
+# Configure npm to use a reliable registry mirror
+RUN npm config set registry https://registry.npmmirror.com
 
 # Copy package files
-COPY pnpm-lock.yaml package.json ./
+COPY package.json ./
 
-# Install all dependencies
-RUN pnpm install --frozen-lockfile
+# Install all dependencies with npm (tolerate peer conflicts)
+RUN npm install --no-audit --legacy-peer-deps
 
 # Copy the full source code
 COPY . .

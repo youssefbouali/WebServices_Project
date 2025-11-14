@@ -95,17 +95,15 @@ services:
       - "3000:3000"
     environment:
       MONGO_URL: mongodb://mongodb:27017/healthtrack
-      JWT_SECRET: ${JWT_SECRET}
+      JWT_SECRET: ${JWT_SECRET:-defaultsecret}
       PORT: 3000
     depends_on:
       - mongodb
     networks:
       - profile-network
-    volumes:
-      - ./profile/src:/app/src
-    command: npm run dev
+    restart: always
 
-  # --- Spring Boot with SQL Server ---
+  # --- Spring Boot avec SQL Server ---
   db:
     image: mcr.microsoft.com/mssql/server:2019-latest
     environment:
@@ -137,7 +135,7 @@ services:
     networks:
       - planification-network
 
-  # --- Spring Boot Suivi Patients ---
+  # --- Spring Boot Suivi Traitement ---
   postgres:
     image: postgres:17
     container_name: postgres
@@ -166,13 +164,14 @@ services:
       SPRING_JPA_SHOW_SQL: "true"
       SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.PostgreSQLDialect
       SERVER_PORT: 8002
+      ALLOWED_ORIGINS: http://localhost:5000,http://localhost:8080,http://localhost:3000
     ports:
       - "8002:8002"
     restart: always
     networks:
       - suivitraitement-network
 
-  # --- Frontend Nextjs ---
+  # --- Frontend Next.js ---
   frontend_service:
     build:
       context: ./frontend
