@@ -30,11 +30,11 @@ import PatientDashboard from "./pages/PatientDashboard";
 import PatientAppointments from "./pages/PatientAppointments";
 import PatientAlerts from "./pages/PatientAlerts";
 import PatientTreatmentTracking from "./pages/PatientTreatmentTracking";
-import PatientProfile from "./pages/PatientProfile";
 import DoctorPatients from "./pages/DoctorPatients";
 import DoctorAppointments from "./pages/DoctorAppointments";
 import DoctorAlerts from "./pages/DoctorAlerts";
 import DoctorTreatmentTracking from "./pages/DoctorTreatmentTracking";
+import PatientProfile from "./pages/PatientProfile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -189,7 +189,7 @@ const Root = () => (
               }
             />
             <Route
-              path="/doctor/appointments"
+              path="/doctor/rendez-vous"
               element={
                 <ProtectedRoute>
                   <DoctorAppointments />
@@ -221,18 +221,18 @@ const Root = () => (
               }
             />
             <Route
-              path="/patient/appointments"
+              path="/patient/profil"
               element={
                 <ProtectedRoute>
-                  <PatientAppointments />
+                  <PatientProfile />
                 </ProtectedRoute>
               }
             />
             <Route
-              path="/patient/profile"
+              path="/patient/rendez-vous"
               element={
                 <ProtectedRoute>
-                  <PatientProfile />
+                  <PatientAppointments />
                 </ProtectedRoute>
               }
             />

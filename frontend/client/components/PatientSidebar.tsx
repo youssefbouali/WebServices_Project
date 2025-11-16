@@ -13,9 +13,9 @@ export default function PatientSidebar() {
 
   const menuItems = [
     { path: "/patient-dashboard", label: "Tableau de Bord", icon: Activity },
-    { path: "/patient/profile", label: "Mon Profil", icon: User },
+    { path: "/patient/profil", label: "Mon Profil", icon: User },
     { path: "/patient/devices", label: "Mes Appareils", icon: Tablet },
-    { path: "/patient/appointments", label: "Mes Rendez-vous", icon: Calendar },
+    { path: "/patient/rendez-vous", label: "Mes Rendez-vous", icon: Calendar },
     { path: "/patient/alertes", label: "Mes Alertes", icon: AlertTriangle },
     {
       path: "/patient/suivi-traitements",
