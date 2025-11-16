@@ -35,6 +35,8 @@ import DoctorAppointments from "./pages/DoctorAppointments";
 import DoctorAlerts from "./pages/DoctorAlerts";
 import DoctorTreatmentTracking from "./pages/DoctorTreatmentTracking";
 import PatientProfile from "./pages/PatientProfile";
+import PatientDevices from "./pages/PatientDevices";
+import DoctorDevices from "./pages/DoctorDevices";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -63,7 +65,7 @@ const Root = () => (
               path="/patient/devices"
               element={
                 <ProtectedRoute>
-                  <DeviceDashboard />
+                  <PatientDevices />
                 </ProtectedRoute>
               }
             />
@@ -72,7 +74,7 @@ const Root = () => (
               path="/doctor/devices"
               element={
                 <ProtectedRoute>
-                  <DeviceDashboard />
+                  <DoctorDevices />
                 </ProtectedRoute>
               }
             />
