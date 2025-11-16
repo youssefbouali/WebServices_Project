@@ -37,6 +37,7 @@ import DoctorTreatmentTracking from "./pages/DoctorTreatmentTracking";
 import PatientProfile from "./pages/PatientProfile";
 import PatientDevices from "./pages/PatientDevices";
 import DoctorDevices from "./pages/DoctorDevices";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -251,6 +252,14 @@ const Root = () => (
               element={
                 <ProtectedRoute>
                   <PatientTreatmentTracking />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin-dashboard"
+              element={
+                <ProtectedRoute>
+                  <AdminDashboard />
                 </ProtectedRoute>
               }
             />
