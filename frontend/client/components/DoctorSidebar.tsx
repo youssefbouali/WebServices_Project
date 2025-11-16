@@ -14,14 +14,14 @@ export default function DoctorSidebar() {
   const menuItems = [
     { path: "/doctor-dashboard", label: "Tableau de Bord", icon: Activity },
     { path: "/doctor/mes-patients", label: "Mes Patients", icon: Users },
-    { path: "/doctor/devices", label: "Appareils (patients)", icon: Tablet },
-    { path: "/doctor/rendez-vous", label: "Rendez-vous", icon: Calendar },
+    { path: "/doctor/appointments", label: "Rendez-vous", icon: Calendar },
     { path: "/doctor/alertes", label: "Alertes", icon: AlertTriangle },
     {
       path: "/doctor/suivi-traitements",
       label: "Suivi Traitements",
       icon: TrendingUp,
     },
+    { path: "/doctor/devices", label: "Appareils (patients)", icon: Tablet },
   ];
 
   return (

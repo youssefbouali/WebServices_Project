@@ -30,6 +30,7 @@ import PatientDashboard from "./pages/PatientDashboard";
 import PatientAppointments from "./pages/PatientAppointments";
 import PatientAlerts from "./pages/PatientAlerts";
 import PatientTreatmentTracking from "./pages/PatientTreatmentTracking";
+import PatientProfile from "./pages/PatientProfile";
 import DoctorPatients from "./pages/DoctorPatients";
 import DoctorAppointments from "./pages/DoctorAppointments";
 import DoctorAlerts from "./pages/DoctorAlerts";
@@ -188,7 +189,7 @@ const Root = () => (
               }
             />
             <Route
-              path="/doctor/rendez-vous"
+              path="/doctor/appointments"
               element={
                 <ProtectedRoute>
                   <DoctorAppointments />
@@ -220,10 +221,18 @@ const Root = () => (
               }
             />
             <Route
-              path="/patient/rendez-vous"
+              path="/patient/appointments"
               element={
                 <ProtectedRoute>
                   <PatientAppointments />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/patient/profile"
+              element={
+                <ProtectedRoute>
+                  <PatientProfile />
                 </ProtectedRoute>
               }
             />

@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
+import PatientSidebar from "@/components/PatientSidebar";
+import DoctorSidebar from "@/components/DoctorSidebar";
+import { useAuth } from "@/lib/auth";
 import {
   Tablet,
   CheckCircle,
@@ -25,10 +28,10 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/lib/auth";
 
 export default function DeviceDashboard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { toast } = useToast();
   const { user } = useAuth();
   const [devices, setDevices] = useState<Device[]>([]);
@@ -178,7 +181,9 @@ export default function DeviceDashboard() {
 
   return (
     <div className="flex min-h-screen bg-[#F9FAFB]">
-      <Sidebar />
+      {user?.role === "PATIENT" && <PatientSidebar />}
+      {user?.role === "DOCTOR" && <DoctorSidebar />}
+      {!user?.role || (user?.role !== "PATIENT" && user?.role !== "DOCTOR") && <Sidebar />}
 
       <main className="flex-1 ml-0 lg:ml-[250px]">
         <header className="bg-white border-b border-gray-200 shadow-sm px-8 py-6">
