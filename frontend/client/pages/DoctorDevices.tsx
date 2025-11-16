@@ -1,41 +1,21 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import DoctorSidebar from "@/components/DoctorSidebar";
-import {
-  Tablet,
-  CheckCircle,
-  AlertTriangle,
-  Users,
-  Eye,
-  Edit,
-} from "lucide-react";
-import { getDevices, Device, updateDevice } from "@/lib/api/devices";
+import { Tablet, CheckCircle, AlertTriangle, Users, Eye } from "lucide-react";
+import { getDevices, Device } from "@/lib/api/devices";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
-  DialogDescription,
 } from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 
 export default function DoctorDevices() {
-  const navigate = useNavigate();
-  const { toast } = useToast();
   const { user } = useAuth();
   const [devices, setDevices] = useState<Device[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [viewingDevice, setViewingDevice] = useState<Device | null>(null);
-  const [editingDevice, setEditingDevice] = useState<Device | null>(null);
-  const [editFormData, setEditFormData] = useState({
-    name: "",
-    type: "",
-    status: "inactive" as "active" | "inactive",
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const fullName = user ? `${user.firstName} ${user.lastName}` : "Utilisateur";
   const doctorTitle = user?.role === "DOCTOR" ? `Dr. ${fullName}` : fullName;
 
@@ -64,39 +44,6 @@ export default function DoctorDevices() {
 
   const handleViewDevice = (device: Device) => {
     setViewingDevice(device);
-  };
-
-  const handleEditDevice = (device: Device) => {
-    setEditingDevice(device);
-    setEditFormData({
-      name: device.name,
-      type: device.type,
-      status: device.status,
-    });
-  };
-
-  const handleSaveEdit = async () => {
-    if (!editingDevice) return;
-    setIsSubmitting(true);
-    try {
-      await updateDevice(editingDevice.id, editFormData);
-      toast({
-        title: "Appareil mis à jour",
-        description: `${editingDevice.name} a été mis à jour avec succès.`,
-      });
-      loadDevices();
-      setEditingDevice(null);
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to update device";
-      toast({
-        title: "Erreur",
-        description: message,
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
   };
 
   const totalDevices = devices.length;
@@ -202,17 +149,10 @@ export default function DoctorDevices() {
           </div>
 
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-            <div className="border-b border-gray-200 px-4 lg:px-6 py-4 lg:py-5 flex items-center justify-between">
+            <div className="border-b border-gray-200 px-4 lg:px-6 py-4 lg:py-5">
               <h2 className="text-base lg:text-xl font-semibold text-gray-900">
                 Liste des appareils des patients
               </h2>
-              <button
-                onClick={() => navigate("/device-registration")}
-                className="bg-blue-600 text-white px-3 lg:px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 text-xs lg:text-sm"
-              >
-                <span className="text-lg leading-none">+</span>
-                <span>Ajouter appareil</span>
-              </button>
             </div>
 
             <div className="overflow-x-auto">
@@ -296,20 +236,12 @@ export default function DoctorDevices() {
                           {device.lastActivity}
                         </td>
                         <td className="px-4 lg:px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <button
-                              onClick={() => handleViewDevice(device.original)}
-                              className="text-blue-600 hover:text-blue-700"
-                            >
-                              <Eye className="w-4 h-4 lg:w-5 lg:h-5" />
-                            </button>
-                            <button
-                              onClick={() => handleEditDevice(device.original)}
-                              className="text-gray-600 hover:text-gray-700"
-                            >
-                              <Edit className="w-4 h-4 lg:w-5 lg:h-5" />
-                            </button>
-                          </div>
+                          <button
+                            onClick={() => handleViewDevice(device.original)}
+                            className="text-blue-600 hover:text-blue-700"
+                          >
+                            <Eye className="w-4 h-4 lg:w-5 lg:h-5" />
+                          </button>
                         </td>
                       </tr>
                     ))
@@ -397,105 +329,6 @@ export default function DoctorDevices() {
               </div>
             </div>
           )}
-          <DialogFooter className="mt-6">
-            <button
-              onClick={() => {
-                setViewingDevice(null);
-                handleEditDevice(viewingDevice!);
-              }}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Éditer
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={!!editingDevice}
-        onOpenChange={() => setEditingDevice(null)}
-      >
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Éditer l'appareil</DialogTitle>
-            <DialogDescription>
-              Modifiez les informations de l'appareil du patient
-            </DialogDescription>
-          </DialogHeader>
-          {editingDevice && (
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-gray-700">
-                  Nom de l'appareil
-                </label>
-                <input
-                  type="text"
-                  value={editFormData.name}
-                  onChange={(e) =>
-                    setEditFormData({
-                      ...editFormData,
-                      name: e.target.value,
-                    })
-                  }
-                  className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700">
-                  Type d'appareil
-                </label>
-                <select
-                  value={editFormData.type}
-                  onChange={(e) =>
-                    setEditFormData({
-                      ...editFormData,
-                      type: e.target.value,
-                    })
-                  }
-                  className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="sensor">Capteur</option>
-                  <option value="monitor">Moniteur</option>
-                  <option value="device">Appareil Médical</option>
-                  <option value="pump">Pompe</option>
-                  <option value="ventilator">Respirateur</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700">
-                  État
-                </label>
-                <select
-                  value={editFormData.status}
-                  onChange={(e) =>
-                    setEditFormData({
-                      ...editFormData,
-                      status: e.target.value as "active" | "inactive",
-                    })
-                  }
-                  className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="active">Actif</option>
-                  <option value="inactive">Inactif</option>
-                </select>
-              </div>
-            </div>
-          )}
-          <DialogFooter className="mt-6">
-            <button
-              onClick={() => setEditingDevice(null)}
-              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              Annuler
-            </button>
-            <button
-              onClick={handleSaveEdit}
-              disabled={isSubmitting}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-            >
-              Enregistrer
-            </button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

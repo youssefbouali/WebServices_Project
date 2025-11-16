@@ -216,6 +216,13 @@ export default function PatientAppointments() {
                 ▾
               </div>
             </div>
+
+            <Link
+              to="/appointments/new"
+              className="px-4 lg:px-8 h-10 bg-[#10B981] text-white rounded-md text-sm font-bold hover:bg-[#059669] transition-colors flex items-center whitespace-nowrap"
+            >
+              + Nouveau RDV
+            </Link>
           </div>
 
           {/* Table */}
