@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { ProfileService } from '../services/ProfileService';
-import { AuthRequest, generateToken } from '../middleware/auth.middleware';
+import { generateToken } from '../middleware/auth.middleware';
 import { CreateProfileDto, LoginDto, ProfileResponseDto, UpdateProfileDto } from '../dto/profile.dto';
 import { Profile, ProfileRole } from '../entities/Profile';
 
@@ -59,9 +59,15 @@ export class ProfileController {
     }
   }
 
-  async getCurrentProfile(req: AuthRequest, res: Response) {
+  // CORRIGÉ: Remplacez AuthRequest par Request
+  async getCurrentProfile(req: Request, res: Response) {
     try {
-      const profile = await this.service.findById(req.user!.id);
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
+      const profile = await this.service.findById(userId);
       if (!profile) {
         return res.status(404).json({ error: 'Profile not found' });
       }
@@ -71,26 +77,40 @@ export class ProfileController {
     }
   }
 
-  async updateCurrentProfile(req: AuthRequest, res: Response) {
+  // CORRIGÉ: Remplacez AuthRequest par Request
+  async updateCurrentProfile(req: Request, res: Response) {
     try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
       const dto: UpdateProfileDto = req.body;
-      const profile = await this.service.update(req.user!.id, dto);
+      const profile = await this.service.update(userId, dto);
       res.json(this.toResponseDto(profile));
     } catch (error: any) {
       res.status(400).json({ error: error.message });
     }
   }
 
-  async changePassword(req: AuthRequest, res: Response) {
+  // CORRIGÉ: Remplacez AuthRequest par Request
+  async changePassword(req: Request, res: Response) {
     try {
+      const userId = req.user?.id;
+      const userEmail = req.user?.email;
+      
+      if (!userId || !userEmail) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+
       const { currentPassword, newPassword } = req.body;
       
-      const profile = await this.service.validateCredentials(req.user!.email, currentPassword);
+      const profile = await this.service.validateCredentials(userEmail, currentPassword);
       if (!profile) {
         return res.status(401).json({ error: 'Current password is incorrect' });
       }
 
-      await this.service.updatePassword(req.user!.id, newPassword);
+      await this.service.updatePassword(userId, newPassword);
       res.json({ message: 'Password updated successfully' });
     } catch (error: any) {
       res.status(400).json({ error: error.message });
@@ -159,6 +179,16 @@ export class ProfileController {
     try {
       const stats = await this.service.getStatistics();
       res.json(stats);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+  // AJOUT: Méthode pour récupérer les patients
+  async getPatients(req: Request, res: Response) {
+    try {
+      const patients = await this.service.listByRole(ProfileRole.Patient);
+      res.json(patients.map(p => this.toResponseDto(p)));
     } catch (error: any) {
       res.status(400).json({ error: error.message });
     }

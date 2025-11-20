@@ -4,15 +4,16 @@ import { ProfileRole } from '../entities/Profile';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey123!';
 
-export interface AuthRequest extends Request {
-  user?: {
-    id: string;
-    email: string;
-    role: ProfileRole;
-  };
-}
+// SUPPRIMEZ complètement l'interface AuthRequest - elle cause l'erreur
+// export interface AuthRequest extends Request {
+//   user?: {
+//     id: string;
+//     email: string;
+//     role: ProfileRole;
+//   };
+// }
 
-export const authenticate = (req: AuthRequest, res: Response, next: NextFunction) => {
+export const authenticate = (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
   
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -35,7 +36,7 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
 };
 
 export const authorize = (...roles: ProfileRole[]) => {
-  return (req: AuthRequest, res: Response, next: NextFunction) => {
+  return (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) {
       return res.status(401).json({ error: 'Not authenticated' });
     }

@@ -3,11 +3,11 @@ import Sidebar from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Activity, ChevronLeft } from "lucide-react";
+import { Activity, ChevronLeft, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
-import { createTreatment } from "@/lib/api/treatments";
-import { listProfiles } from "@/lib/api/profiles";
+import { createTreatment } from "../lib/api/treatments";
+import { API_BASE_URLS, apiFetch } from "../lib/api/config";
 
 export default function TreatmentForm() {
   const [formData, setFormData] = useState({
@@ -32,13 +32,29 @@ export default function TreatmentForm() {
 
   const loadPatients = async () => {
     setIsLoading(true);
+    setError("");
     try {
-      const data = await listProfiles({ role: "PATIENT" });
-      setPatients(data);
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to load patients";
+      console.log("🔄 Chargement des patients depuis MongoDB...");
+      
+      // ✅ Récupération automatique depuis MongoDB via Spring Boot
+      const patientsData = await apiFetch<any[]>(
+        `${API_BASE_URLS.TREATMENTS}/treatments/patients`
+      );
+      
+      console.log("✅ Patients chargés depuis MongoDB:", patientsData);
+      
+      if (patientsData && patientsData.length > 0) {
+        setPatients(patientsData);
+      } else {
+        setError("Aucun patient trouvé dans la base de données");
+        setPatients([]);
+      }
+      
+    } catch (err: any) {
+      console.error("❌ Erreur chargement patients:", err);
+      const message = err?.message || "Impossible de charger la liste des patients depuis la base de données";
       setError(message);
+      setPatients([]); // ✅ Liste vide en cas d'erreur
     } finally {
       setIsLoading(false);
     }
@@ -49,29 +65,69 @@ export default function TreatmentForm() {
     setError("");
     setIsSubmitting(true);
 
-    try {
-      if (!formData.patientId) {
-        throw new Error("Patient is required");
-      }
+    // Validation
+    if (!formData.patientId) {
+      setError("Veuillez sélectionner un patient");
+      setIsSubmitting(false);
+      return;
+    }
 
-      await createTreatment({
+    // Validation des dates
+    if (formData.dateDebut && formData.dateFin) {
+      const startDate = new Date(formData.dateDebut);
+      const endDate = new Date(formData.dateFin);
+      if (endDate <= startDate) {
+        setError("La date de fin doit être après la date de début");
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
+    try {
+      console.log("🔄 Création du traitement...", formData);
+      
+      // Formatage des dates pour Spring Boot
+      const treatmentData = {
         patientId: formData.patientId,
         medicament: formData.medicament,
         dosage: formData.dosage,
         frequence: formData.frequence,
-        dateDebut: formData.dateDebut,
-        dateFin: formData.dateFin,
+        dateDebut: formData.dateDebut ? new Date(formData.dateDebut).toISOString() : "",
+        dateFin: formData.dateFin ? new Date(formData.dateFin).toISOString() : "",
         instructions: formData.instructions,
-      });
+      };
 
+      console.log("📦 Données envoyées:", treatmentData);
+      
+      const result = await createTreatment(treatmentData);
+
+      console.log("✅ Traitement créé avec succès!", result);
+      
+      // Redirection vers la page de suivi
       navigate(`/treatment-tracking?patientId=${formData.patientId}`);
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to create treatment";
+      
+    } catch (err: any) {
+      console.error("❌ Erreur création traitement:", err);
+      let message = err?.message || "Erreur lors de la création du traitement";
+      
+      // Messages d'erreur plus spécifiques
+      if (err?.status === 400) {
+        message = "Données invalides. Vérifiez tous les champs obligatoires.";
+      } else if (err?.status === 500) {
+        message = "Erreur serveur. Veuillez réessayer.";
+      }
+      
       setError(message);
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   return (
@@ -81,7 +137,7 @@ export default function TreatmentForm() {
         {/* Header */}
         <header className="bg-white border-b border-gray-200 h-20 flex items-center justify-between px-10">
           <h1 className="text-2xl font-bold text-[#1E293B]">
-            Page d'ajout d'un traitement
+            Ajouter un Traitement
           </h1>
           <div className="flex items-center gap-4">
             <span className="text-sm text-[#64748B]">Admin</span>
@@ -94,13 +150,13 @@ export default function TreatmentForm() {
         {/* Main Content */}
         <main className="p-6 max-w-4xl mx-auto">
           {/* Back Button */}
-          <Link to="/profiles">
+          <Link to="/treatment-tracking">
             <Button
               variant="outline"
               className="mb-6 border-[#E2E8F0] text-[#64748B]"
             >
               <ChevronLeft className="w-4 h-4 mr-2" />
-              Retour
+              Retour au suivi
             </Button>
           </Link>
 
@@ -126,21 +182,37 @@ export default function TreatmentForm() {
                 <div className="relative mt-2">
                   <select
                     value={formData.patientId}
-                    onChange={(e) =>
-                      setFormData({ ...formData, patientId: e.target.value })
-                    }
-                    className="w-full h-[50px] px-4 bg-[#F8FAFC] border border-[#CBD5E1] rounded-lg text-[#94A3B8] appearance-none cursor-pointer"
+                    onChange={(e) => handleInputChange("patientId", e.target.value)}
+                    className="w-full h-[50px] px-4 bg-[#F8FAFC] border border-[#CBD5E1] rounded-lg text-[#1E293B] appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     required
+                    disabled={isLoading}
                   >
                     <option value="">Choisir un patient...</option>
                     {patients.map((patient) => (
                       <option key={patient.id} value={patient.id}>
                         {patient.firstName} {patient.lastName}
+                        {patient.email ? ` (${patient.email})` : ''}
                       </option>
                     ))}
                   </select>
                   <ChevronLeft className="absolute right-4 top-1/2 -translate-y-1/2 rotate-[-90deg] w-3 h-3 text-[#64748B] pointer-events-none" />
                 </div>
+                {isLoading && (
+                  <div className="flex items-center gap-2 text-sm text-[#64748B] mt-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Chargement des patients depuis la base de données...
+                  </div>
+                )}
+                {!isLoading && patients.length === 0 && (
+                  <p className="text-sm text-amber-600 mt-2">
+                    Aucun patient disponible. Vérifiez que le service Profiles est en cours d'exécution.
+                  </p>
+                )}
+                {!isLoading && patients.length > 0 && (
+                  <p className="text-sm text-[#64748B] mt-2">
+                    {patients.length} patient(s) chargé(s) depuis MongoDB
+                  </p>
+                )}
               </div>
 
               {/* Medication Name */}
@@ -151,11 +223,10 @@ export default function TreatmentForm() {
                 <Input
                   placeholder="Ex: Amoxicilline"
                   value={formData.medicament}
-                  onChange={(e) =>
-                    setFormData({ ...formData, medicament: e.target.value })
-                  }
+                  onChange={(e) => handleInputChange("medicament", e.target.value)}
                   className="mt-2 h-[50px] bg-[#F8FAFC] border-[#CBD5E1]"
                   required
+                  disabled={isSubmitting}
                 />
               </div>
 
@@ -168,11 +239,10 @@ export default function TreatmentForm() {
                   <Input
                     placeholder="Ex: 500mg"
                     value={formData.dosage}
-                    onChange={(e) =>
-                      setFormData({ ...formData, dosage: e.target.value })
-                    }
+                    onChange={(e) => handleInputChange("dosage", e.target.value)}
                     className="mt-2 h-[50px] bg-white border-[#CBD5E1]"
                     required
+                    disabled={isSubmitting}
                   />
                 </div>
                 <div>
@@ -182,11 +252,10 @@ export default function TreatmentForm() {
                   <Input
                     placeholder="Ex: 3 fois par jour"
                     value={formData.frequence}
-                    onChange={(e) =>
-                      setFormData({ ...formData, frequence: e.target.value })
-                    }
+                    onChange={(e) => handleInputChange("frequence", e.target.value)}
                     className="mt-2 h-[50px] bg-white border-[#CBD5E1]"
                     required
+                    disabled={isSubmitting}
                   />
                 </div>
               </div>
@@ -200,11 +269,10 @@ export default function TreatmentForm() {
                   <Input
                     type="datetime-local"
                     value={formData.dateDebut}
-                    onChange={(e) =>
-                      setFormData({ ...formData, dateDebut: e.target.value })
-                    }
+                    onChange={(e) => handleInputChange("dateDebut", e.target.value)}
                     className="mt-2 h-[50px] bg-white border-[#CBD5E1]"
                     required
+                    disabled={isSubmitting}
                   />
                 </div>
                 <div>
@@ -214,11 +282,10 @@ export default function TreatmentForm() {
                   <Input
                     type="datetime-local"
                     value={formData.dateFin}
-                    onChange={(e) =>
-                      setFormData({ ...formData, dateFin: e.target.value })
-                    }
+                    onChange={(e) => handleInputChange("dateFin", e.target.value)}
                     className="mt-2 h-[50px] bg-white border-[#CBD5E1]"
                     required
+                    disabled={isSubmitting}
                   />
                 </div>
               </div>
@@ -231,11 +298,10 @@ export default function TreatmentForm() {
                 <Input
                   placeholder="Ex: À prendre après les repas"
                   value={formData.instructions}
-                  onChange={(e) =>
-                    setFormData({ ...formData, instructions: e.target.value })
-                  }
+                  onChange={(e) => handleInputChange("instructions", e.target.value)}
                   className="mt-2 h-[50px] bg-white border-[#CBD5E1]"
                   required
+                  disabled={isSubmitting}
                 />
               </div>
 
@@ -246,16 +312,24 @@ export default function TreatmentForm() {
                     type="button"
                     variant="outline"
                     className="w-full h-11 border-[#E2E8F0] bg-[#F1F5F9] text-[#475569]"
+                    disabled={isSubmitting}
                   >
                     Annuler
                   </Button>
                 </Link>
                 <Button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isLoading || patients.length === 0}
                   className="flex-1 h-11 bg-[#2563EB] text-white hover:bg-[#1E40AF] disabled:opacity-50"
                 >
-                  {isSubmitting ? "Enregistrement..." : "Enregistrer"}
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      Enregistrement...
+                    </>
+                  ) : (
+                    "Enregistrer le Traitement"
+                  )}
                 </Button>
               </div>
             </form>
