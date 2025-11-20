@@ -34,7 +34,7 @@ services:
       - device_db
       - influxdb
     environment:
-      DATABASE_URL: postgresql://device_user:device_pass@device_db:5432/device_db
+      DATABASE_URL: postgresql://device_user:device_pass@device_db:5432/device_database
       INFLUX_URL: http://influxdb:8086
       INFLUX_TOKEN: my-token
       INFLUX_ORG: my-org
@@ -49,7 +49,7 @@ services:
     environment:
       POSTGRES_USER: device_user
       POSTGRES_PASSWORD: device_pass
-      POSTGRES_DB: device_db
+      POSTGRES_DB: device_database
     ports:
       - "5433:5432"
     volumes:

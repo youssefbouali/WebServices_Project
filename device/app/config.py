@@ -2,7 +2,7 @@ import os
 
 POSTGRES_USER = os.getenv("POSTGRES_USER", "device_user")
 POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "device_pass")
-POSTGRES_DB = os.getenv("POSTGRES_DB", "device_db")
+POSTGRES_DB = os.getenv("POSTGRES_DB", "device_database")
 POSTGRES_HOST = os.getenv("POSTGRES_HOST", "device_db")
 POSTGRES_PORT = 5432
 
