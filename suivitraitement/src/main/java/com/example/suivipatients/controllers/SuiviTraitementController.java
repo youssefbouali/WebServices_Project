@@ -17,7 +17,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/treatments")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:3000")
 public class SuiviTraitementController {
 
     private final SuiviTraitementService traitementService;

@@ -6,6 +6,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -17,6 +23,13 @@ import java.util.List;
 public class SuiviTraitementService {
 
     private final SuiviTraitementRepository traitementRepository;
+    private final RestTemplate restTemplate;
+
+    @Value("${profiles.base-url:http://localhost:3000/api/profiles}")
+    private String profilesBaseUrl;
+
+    @Value("${profiles.api-token:}")
+    private String profilesApiToken;
 
     public SuiviTraitement createTreatment(String patientId, String medicament, String dosage,
                                            String frequence, LocalDateTime dateDebut,
@@ -123,6 +136,7 @@ public class SuiviTraitementService {
         if (patientId == null || patientId.trim().isEmpty()) {
             throw new IllegalArgumentException("L'ID du patient est requis");
         }
+        validatePatientExists(patientId);
         if (medicament == null || medicament.trim().isEmpty()) {
             throw new IllegalArgumentException("Le nom du médicament est requis");
         }
@@ -132,6 +146,20 @@ public class SuiviTraitementService {
         if (dateFin == null || dateFin.isBefore(dateDebut)) {
             throw new IllegalArgumentException("La date de fin doit être après la date de début");
         }
+    }
+
+    private void validatePatientExists(String patientId) {
+        HttpHeaders headers = new HttpHeaders();
+        if (profilesApiToken != null && !profilesApiToken.isBlank()) {
+            headers.set("Authorization", "Bearer " + profilesApiToken);
+        }
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+        try {
+            restTemplate.exchange(profilesBaseUrl + "/" + patientId, HttpMethod.GET, entity, Object.class);
+        } catch (HttpClientErrorException.NotFound e) {
+            throw new IllegalArgumentException("Patient introuvable: " + patientId);
+        }
+        log.info("Validation patient: {} (service profiles: {})", patientId, profilesBaseUrl);
     }
 
     private void updateTreatmentStatus(SuiviTraitement traitement) {
