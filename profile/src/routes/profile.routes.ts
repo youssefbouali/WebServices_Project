@@ -9,6 +9,11 @@ export function createProfileRouter(controller: ProfileController): Router {
   // Public routes
   router.post('/auth/register', controller.register.bind(controller));
   router.post('/auth/login', controller.login.bind(controller));
+  // AJOUTER: Route publique pour récupérer les patients
+  router.get('/role/patients', controller.getPatients.bind(controller));
+
+  // AJOUTER cette route publique
+  router.get('/public/patients', controller.getPatients.bind(controller));
 
   // Protected routes - require authentication
   router.get('/me', authenticate, controller.getCurrentProfile.bind(controller));

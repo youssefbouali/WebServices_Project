@@ -1,4 +1,3 @@
-version: "3.9"
 
 networks:
   device-network:
@@ -98,7 +97,8 @@ services:
       JWT_SECRET: ${JWT_SECRET:-defaultsecret}
       PORT: 3000
     depends_on:
-      - mongodb
+      mongodb:
+        condition: service_started
     networks:
       - profile-network
     restart: always
@@ -106,6 +106,7 @@ services:
   # --- Spring Boot avec SQL Server ---
   db:
     image: mcr.microsoft.com/mssql/server:2019-latest
+    container_name: sqlserver_db
     environment:
       SA_PASSWORD: "P@ssw0rd1234"
       ACCEPT_EULA: "Y"
@@ -120,17 +121,19 @@ services:
 
   planification_service:
     build: ./planification
+    container_name: planification_service
     ports:
       - "8082:8080"
     depends_on:
-      - db
+      db:
+        condition: service_started
     environment:
       SPRING_DATASOURCE_URL: jdbc:sqlserver://db:1433;databaseName=master;encrypt=true;trustServerCertificate=true;
       SPRING_DATASOURCE_USERNAME: sa
       SPRING_DATASOURCE_PASSWORD: P@ssw0rd1234
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_JPA_SHOW_SQL: "true"
-    command: sh -c "sleep 120 && java -jar app.jar"
+    command: sh -c "sleep 30 && java -jar app.jar"
     restart: unless-stopped
     networks:
       - planification-network
@@ -138,7 +141,7 @@ services:
   # --- Spring Boot Suivi Traitement ---
   postgres:
     image: postgres:17
-    container_name: postgres
+    container_name: postgres_suivitraitement
     restart: always
     environment:
       POSTGRES_DB: suivi_traitement
@@ -155,7 +158,8 @@ services:
     build: ./suivitraitement
     container_name: suivitraitement_service
     depends_on:
-      - postgres
+      postgres:
+        condition: service_started
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/suivi_traitement
       SPRING_DATASOURCE_USERNAME: postgres
@@ -164,22 +168,34 @@ services:
       SPRING_JPA_SHOW_SQL: "true"
       SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.PostgreSQLDialect
       SERVER_PORT: 8002
-      ALLOWED_ORIGINS: http://localhost:5000,http://localhost:8080,http://localhost:3000
+      ALLOWED_ORIGINS: http://localhost:5000,http://localhost:3000,http://frontend_service:8080
+      PROFILES_BASE_URL: http://profile_service:3000/api/profiles
     ports:
       - "8002:8002"
     restart: always
     networks:
       - suivitraitement-network
+      - frontend-network
+      - profile-network
 
   # --- Frontend Next.js ---
   frontend_service:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    container_name: frontend_service
     ports:
       - "5000:8080"
     environment:
       NODE_ENV: development
+      VITE_TREATMENTS_API_URL: http://suivitraitement_service:8002/api
+      VITE_PROFILES_API_URL: http://profile_service:3000/api
+      VITE_DEVICES_API_URL: http://device_service:8000/api
+      VITE_APPOINTMENTS_API_URL: http://planification_service:8082/api
     restart: unless-stopped
     networks:
       - frontend-network
+      - suivitraitement-network
+      - profile-network
+      - device-network
+      - planification-network

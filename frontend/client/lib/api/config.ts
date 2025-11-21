@@ -3,10 +3,10 @@
  */
 
 export const API_BASE_URLS = {
-  PROFILES: import.meta.env.VITE_PROFILES ?? "http://localhost:3000",
-  DEVICES: import.meta.env.VITE_DEVICES ?? "http://localhost:8000",
-  APPOINTMENTS: import.meta.env.VITE_APPOINTMENTS ?? "http://localhost:8082",
-  TREATMENTS: import.meta.env.VITE_TREATMENTS ?? "http://localhost:8002",
+  PROFILES: import.meta.env.VITE_PROFILES || "http://localhost:3000/api",
+  DEVICES: import.meta.env.VITE_DEVICES || "http://localhost:8000/api", 
+  APPOINTMENTS: import.meta.env.VITE_APPOINTMENTS || "http://localhost:8082/api",
+  TREATMENTS: import.meta.env.VITE_TREATMENTS || "http://localhost:8002",
 };
 
 export interface ApiError {
@@ -34,15 +34,23 @@ export async function apiFetch<T>(
   }
 
   try {
+    console.log(`🔄 API Call: ${url}`, options); // LOG pour debug
+    
     const response = await fetch(url, {
       ...options,
       headers,
     });
 
+    console.log(`📡 API Response: ${response.status} ${response.statusText}`);
+
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({
-        message: `HTTP ${response.status}`,
-      }));
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch {
+        errorData = { message: `HTTP ${response.status}` };
+      }
+      
       const error: ApiError = {
         message: errorData.message || `HTTP ${response.status}`,
         status: response.status,
@@ -56,14 +64,18 @@ export async function apiFetch<T>(
       return {} as T;
     }
 
-    return await response.json();
+    const data = await response.json();
+    console.log(`✅ API Success:`, data); // LOG pour debug
+    return data;
+    
   } catch (error) {
-    if (error instanceof ApiError) {
-      throw error;
+    console.error(`❌ API Error:`, error); // LOG pour debug
+    if (error instanceof Error) {
+      throw {
+        message: error.message,
+        details: error,
+      } as ApiError;
     }
-    throw {
-      message: error instanceof Error ? error.message : "Unknown error",
-      details: error,
-    } as ApiError;
+    throw error;
   }
 }

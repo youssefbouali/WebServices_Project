@@ -19,7 +19,7 @@ import {
   registerProfile,
   deleteProfileById,
   getCurrentProfile,
-} from "@/lib/api/profiles";
+} from "../lib/api/profiles";
 import {
   Dialog,
   DialogContent,
