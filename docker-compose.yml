@@ -133,6 +133,8 @@ services:
       SPRING_DATASOURCE_PASSWORD: P@ssw0rd1234
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_JPA_SHOW_SQL: "true"
+      # CORS allowed origins for planification service
+      CORS_ALLOWED_ORIGINS: http://localhost:5000,http://localhost:3000,http://frontend_service:8080
     command: sh -c "sleep 30 && java -jar app.jar"
     restart: unless-stopped
     networks:

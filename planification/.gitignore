@@ -40,6 +40,8 @@ build/
 
 .settings/
 
+.env
+
 # Logs
 *.log
 logs/
