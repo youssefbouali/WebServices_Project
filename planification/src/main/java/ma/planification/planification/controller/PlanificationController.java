@@ -1,6 +1,7 @@
 package ma.planification.planification.controller;
 
 import ma.planification.planification.dto.PlanificationRequest;
+import ma.planification.planification.dto.PlanificationResponse;
 import ma.planification.planification.entities.Planification;
 import ma.planification.planification.services.PlanificationService;
 
@@ -31,7 +32,7 @@ public class PlanificationController {
 
     // LISTER LES RDV D'UN PATIENT
     @GetMapping("/patient/{patientId}")
-    public ResponseEntity<List<Planification>> getAppointments(@PathVariable Integer patientId) {
+    public ResponseEntity<List<PlanificationResponse>> getAppointments(@PathVariable Integer patientId) {
         return ResponseEntity.ok(service.getAppointments(patientId));
     }
 
