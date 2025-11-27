@@ -42,9 +42,16 @@ export default function AppointmentManagement() {
       // Fetch patient and doctor details for each appointment
       const displayAppointments: DisplayAppointment[] = await Promise.all(
         rawAppointments.map(async (appt) => {
-          try {
+            try {
             const patient = await getProfileById(appt.patientId.toString());
-            const doctor = await getProfileById(appt.doctorId.toString());
+
+            // prefer server-provided doctorName (returned by planification service)
+            // fall back to calling profile service only when necessary
+            let doctorNameFromServer = (appt as any).doctorName as string | undefined | null;
+            let doctor = null;
+            if (!doctorNameFromServer) {
+              doctor = await getProfileById(appt.doctorId.toString());
+            }
 
             const dateObj = new Date(appt.dateRdv);
             const date = dateObj.toLocaleDateString("fr-FR", {
@@ -57,6 +64,24 @@ export default function AppointmentManagement() {
               minute: "2-digit",
             });
 
+            const computedDoctorName = doctorNameFromServer
+              ? doctorNameFromServer
+              : doctor
+              ? `${doctor.firstName} ${doctor.lastName}`
+              : "Docteur inconnu";
+
+            const computedDoctorInitials = doctorNameFromServer
+              ? doctorNameFromServer
+                  .split(" ")
+                  .filter(Boolean)
+                  .map((s) => s[0])
+                  .slice(0, 2)
+                  .join("")
+                  .toUpperCase()
+              : doctor
+              ? (doctor.firstName[0] + doctor.lastName[0]).toUpperCase()
+              : "??";
+
             return {
               ...appt,
               id: appt.rdvId,
@@ -64,10 +89,8 @@ export default function AppointmentManagement() {
                 patient.firstName[0] + patient.lastName[0]
               ).toUpperCase(),
               patientName: `${patient.firstName} ${patient.lastName}`,
-              doctorInitials: (
-                doctor.firstName[0] + doctor.lastName[0]
-              ).toUpperCase(),
-              doctorName: `${doctor.firstName} ${doctor.lastName}`,
+              doctorInitials: computedDoctorInitials,
+              doctorName: computedDoctorName,
               reason: "Consultation médicale",
               time,
               date,

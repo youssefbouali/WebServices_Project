@@ -4,6 +4,8 @@ export interface Appointment {
   rdvId: number;
   patientId: number;
   doctorId: number;
+  // optional: planification service may return doctorName (we prefer this, avoids extra profile call)
+  doctorName?: string | null;
   dateRdv: string;
   statut: "confirmé" | "en attente" | "annulé";
 }
