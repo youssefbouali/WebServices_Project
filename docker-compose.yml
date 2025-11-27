@@ -187,7 +187,7 @@ services:
       dockerfile: Dockerfile
     container_name: frontend_service
     ports:
-      - "5000:8080"
+      - "5000:5000"
     environment:
       NODE_ENV: development
       VITE_TREATMENTS_API_URL: http://suivitraitement_service:8002/api
