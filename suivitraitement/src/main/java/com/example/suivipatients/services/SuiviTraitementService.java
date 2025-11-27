@@ -154,12 +154,48 @@ public class SuiviTraitementService {
             headers.set("Authorization", "Bearer " + profilesApiToken);
         }
         HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+        // Try public patients endpoint first to avoid auth requirement
+        String publicPatientsUrl = profilesBaseUrl + "/public/patients";
+        try {
+            var response = restTemplate.exchange(publicPatientsUrl, HttpMethod.GET, entity, java.util.List.class);
+            java.util.List<?> list = response.getBody();
+            boolean exists = false;
+            if (list != null) {
+                for (Object item : list) {
+                    if (item instanceof java.util.Map) {
+                        Object id = ((java.util.Map<?, ?>) item).get("id");
+                        if (id != null && patientId.equals(String.valueOf(id))) {
+                            exists = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (exists) {
+                log.info("Validation patient (public list): {} ({} entries)", patientId, list != null ? list.size() : 0);
+                return;
+            }
+            // If public list reachable but patient not found, treat as not found
+            throw new IllegalArgumentException("Patient introuvable: " + patientId);
+        } catch (HttpClientErrorException e) {
+            log.warn("Public patients endpoint inaccessible ({}). Fallback by id.", e.getStatusCode());
+        } catch (Exception e) {
+            log.warn("Public patients endpoint failed: {}. Continuing without blocking.", e.getMessage());
+        }
+
+        // Fallback: try protected by-id route (requires token if configured)
         try {
             restTemplate.exchange(profilesBaseUrl + "/" + patientId, HttpMethod.GET, entity, Object.class);
+            log.info("Validation patient via /:id: {} (service profiles: {})", patientId, profilesBaseUrl);
         } catch (HttpClientErrorException.NotFound e) {
             throw new IllegalArgumentException("Patient introuvable: " + patientId);
+        } catch (HttpClientErrorException e) {
+            // Any other client error (401/403/etc.) should not crash treatment creation
+            log.warn("Profiles by-id check failed: {}. Proceeding without blocking.", e.getStatusCode());
+        } catch (Exception e) {
+            log.warn("Profiles by-id check error: {}. Proceeding without blocking.", e.getMessage());
         }
-        log.info("Validation patient: {} (service profiles: {})", patientId, profilesBaseUrl);
     }
 
     private void updateTreatmentStatus(SuiviTraitement traitement) {

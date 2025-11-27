@@ -13,6 +13,7 @@ type DisplayAppointment = Appointment & {
   reason: string;
   time: string;
   date: string;
+  id: number;
 };
 
 export default function DoctorAppointments() {
@@ -58,6 +59,7 @@ export default function DoctorAppointments() {
 
             return {
               ...appt,
+              id: appt.rdvId,
               patientInitials: (
                 patient.firstName[0] + patient.lastName[0]
               ).toUpperCase(),
@@ -73,6 +75,7 @@ export default function DoctorAppointments() {
           } catch (err) {
             return {
               ...appt,
+              id: appt.rdvId,
               patientInitials: "??",
               patientName: "Patient inconnu",
               doctorInitials: "??",

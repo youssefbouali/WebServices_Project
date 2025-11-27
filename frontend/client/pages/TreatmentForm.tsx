@@ -8,6 +8,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { createTreatment } from "../lib/api/treatments";
 import { API_BASE_URLS, apiFetch } from "../lib/api/config";
+import { listProfiles, Profile } from "@/lib/api/profiles";
 
 export default function TreatmentForm() {
   const [formData, setFormData] = useState({
@@ -19,7 +20,7 @@ export default function TreatmentForm() {
     dateFin: "",
     instructions: "",
   });
-  const [patients, setPatients] = useState<any[]>([]);
+  const [patients, setPatients] = useState<Profile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -34,27 +35,17 @@ export default function TreatmentForm() {
     setIsLoading(true);
     setError("");
     try {
-      console.log("🔄 Chargement des patients depuis MongoDB...");
-      
-      // ✅ Récupération automatique depuis MongoDB via Spring Boot
-      const patientsData = await apiFetch<any[]>(
-        `${API_BASE_URLS.TREATMENTS}/treatments/patients`
-      );
-      
-      console.log("✅ Patients chargés depuis MongoDB:", patientsData);
-      
-      if (patientsData && patientsData.length > 0) {
-        setPatients(patientsData);
+      const profiles = await listProfiles({ role: "PATIENT" });
+      if (profiles && profiles.length > 0) {
+        setPatients(profiles);
       } else {
-        setError("Aucun patient trouvé dans la base de données");
+        setError("Aucun patient trouvé");
         setPatients([]);
       }
-      
     } catch (err: any) {
       console.error("❌ Erreur chargement patients:", err);
-      const message = err?.message || "Impossible de charger la liste des patients depuis la base de données";
-      setError(message);
-      setPatients([]); // ✅ Liste vide en cas d'erreur
+      setError("Impossible de charger les patients (service Profiles)");
+      setPatients([]);
     } finally {
       setIsLoading(false);
     }
@@ -87,13 +78,20 @@ export default function TreatmentForm() {
       console.log("🔄 Création du traitement...", formData);
       
       // Formatage des dates pour Spring Boot
+      const toLocalDateTime = (val: string) => {
+        if (!val) return "";
+        // value from input[type="datetime-local"] is like "YYYY-MM-DDTHH:mm"
+        // Ensure seconds are present but no timezone (LocalDateTime expected)
+        return val.length === 16 ? `${val}:00` : val;
+      };
+
       const treatmentData = {
         patientId: formData.patientId,
         medicament: formData.medicament,
         dosage: formData.dosage,
         frequence: formData.frequence,
-        dateDebut: formData.dateDebut ? new Date(formData.dateDebut).toISOString() : "",
-        dateFin: formData.dateFin ? new Date(formData.dateFin).toISOString() : "",
+        dateDebut: toLocalDateTime(formData.dateDebut),
+        dateFin: toLocalDateTime(formData.dateFin),
         instructions: formData.instructions,
       };
 

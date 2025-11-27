@@ -10,9 +10,8 @@ import {
   Bed,
   Users,
   RefreshCw,
-  AlertTriangle,
-  CheckCircle,
 } from "lucide-react";
+// using local icons defined below to avoid conflicts
 import { getMeasurementsLastHours } from "@/lib/api/influxdb";
 import type { MeasurementData } from "@/lib/api/influxdb";
 

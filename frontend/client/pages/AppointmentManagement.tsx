@@ -14,6 +14,8 @@ type DisplayAppointment = Appointment & {
   reason: string;
   time: string;
   date: string;
+  id: number;
+  status: string;
 };
 
 export default function AppointmentManagement() {
@@ -57,6 +59,7 @@ export default function AppointmentManagement() {
 
             return {
               ...appt,
+              id: appt.rdvId,
               patientInitials: (
                 patient.firstName[0] + patient.lastName[0]
               ).toUpperCase(),
@@ -68,10 +71,17 @@ export default function AppointmentManagement() {
               reason: "Consultation médicale",
               time,
               date,
+              status:
+                appt.statut === "confirmé"
+                  ? "Confirmé"
+                  : appt.statut === "en attente"
+                    ? "En attente"
+                    : "Annulé",
             };
           } catch (err) {
             return {
               ...appt,
+              id: appt.rdvId,
               patientInitials: "??",
               patientName: "Patient inconnu",
               doctorInitials: "??",
@@ -79,6 +89,12 @@ export default function AppointmentManagement() {
               reason: "Consultation",
               time: "??:??",
               date: "Date inconnue",
+              status:
+                appt.statut === "confirmé"
+                  ? "Confirmé"
+                  : appt.statut === "en attente"
+                    ? "En attente"
+                    : "Annulé",
             };
           }
         }),
