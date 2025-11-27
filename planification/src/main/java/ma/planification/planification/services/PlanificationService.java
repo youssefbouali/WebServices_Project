@@ -1,6 +1,8 @@
 package ma.planification.planification.services;
 
 import ma.planification.planification.dto.PlanificationResponse;
+import ma.planification.planification.client.ProfileClient;
+import ma.planification.planification.dto.ProfileDto;
 import ma.planification.planification.entities.Planification;
 import ma.planification.planification.repositories.PlanificationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,17 +19,11 @@ import java.util.Map;
 @Service
 public class PlanificationService {
 
-    private final PlanificationRepository repository;
-    private final RestTemplate restTemplate;
-
-    @Value("${profiles.base-url}")
-    private String profilesBaseUrl;
+    @Autowired
+    private PlanificationRepository repository;
 
     @Autowired
-    public PlanificationService(PlanificationRepository repository, RestTemplate restTemplate) {
-        this.repository = repository;
-        this.restTemplate = restTemplate;
-    }
+    private ProfileClient profileClient;
 
     public Planification scheduleAppointment(Integer patientId, Integer doctorId, LocalDateTime dateRdv) {
         Planification appointment = new Planification();
@@ -45,18 +41,16 @@ public class PlanificationService {
         for (Planification appt : appointments) {
             String doctorName = null;
             try {
-                String url = profilesBaseUrl + "/" + appt.getDoctorId();
-                Map<?, ?> profile = restTemplate.getForObject(url, Map.class);
-                if (profile != null) {
-                    Object first = profile.get("firstName");
-                    Object last = profile.get("lastName");
-                    String fn = first == null ? "" : first.toString();
-                    String ln = last == null ? "" : last.toString();
+                // use ProfileClient to fetch profile DTO
+                ProfileDto dto = profileClient.getProfileById(appt.getDoctorId());
+                if (dto != null) {
+                    String fn = dto.getFirstName() == null ? "" : dto.getFirstName();
+                    String ln = dto.getLastName() == null ? "" : dto.getLastName();
                     String fullname = (fn + " " + ln).trim();
                     doctorName = fullname.isEmpty() ? null : fullname;
                 }
-            } catch (RestClientException ignored) {
-                // ignore and continue without doctorName
+            } catch (Exception ignored) {
+                // keep null doctorName on any failures
             }
 
             PlanificationResponse r = new PlanificationResponse();
@@ -70,6 +64,11 @@ public class PlanificationService {
         }
 
         return result;
+    }
+
+    // Backwards-compatible helper used in tests / older callers
+    public List<PlanificationResponse> getAppointmentsWithDoctorNames(Integer patientId) {
+        return getAppointments(patientId);
     }
 
     public void cancelAppointment(Long rdvId) {
