@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import {
   Activity,
-  Users,
+  User,
   Tablet,
   Calendar,
   TrendingUp,
@@ -12,14 +12,14 @@ export default function Sidebar() {
   const location = useLocation();
 
   const menuItems = [
-    { path: "/dashboard", label: "Tableau de Bord", icon: Activity },
-    { path: "/profiles", label: "Profils", icon: Users },
-    { path: "/devices", label: "Appareils", icon: Tablet },
-    { path: "/alerts", label: "Alertes", icon: AlertTriangle },
-    { path: "/appointments", label: "Planification", icon: Calendar },
+    { path: "/patient-dashboard", label: "Tableau de Bord", icon: Activity },
+    { path: "/patient/profil", label: "Mon Profil", icon: User },
+    { path: "/patient/devices", label: "Mes Appareils", icon: Tablet },
+    { path: "/patient/rendez-vous", label: "Mes Rendez-vous", icon: Calendar },
+    { path: "/patient/alertes", label: "Mes Alertes", icon: AlertTriangle },
     {
-      path: "/treatment-tracking",
-      label: "Suivi Traitement",
+      path: "/patient/suivi-traitements",
+      label: "Suivi Traitements",
       icon: TrendingUp,
     },
   ];

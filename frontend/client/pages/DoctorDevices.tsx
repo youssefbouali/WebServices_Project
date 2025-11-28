@@ -1,6 +1,13 @@
 import { useState, useEffect } from "react";
 import DoctorSidebar from "@/components/DoctorSidebar";
-import { Tablet, CheckCircle, AlertTriangle, Users, Eye } from "lucide-react";
+import {
+  Tablet,
+  CheckCircle,
+  AlertTriangle,
+  Users,
+  Eye,
+  LogOut,
+} from "lucide-react";
 import { getDevices, Device } from "@/lib/api/devices";
 import {
   Dialog,
@@ -9,15 +16,22 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useAuth } from "@/lib/auth";
+import { useNavigate } from "react-router-dom";
 
 export default function DoctorDevices() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [devices, setDevices] = useState<Device[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [viewingDevice, setViewingDevice] = useState<Device | null>(null);
   const fullName = user ? `${user.firstName} ${user.lastName}` : "Utilisateur";
   const doctorTitle = user?.role === "DOCTOR" ? `Dr. ${fullName}` : fullName;
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
 
   useEffect(() => {
     loadDevices();
@@ -105,7 +119,7 @@ export default function DoctorDevices() {
             <h1 className="text-lg lg:text-2xl font-bold text-gray-900">
               Appareils des Patients
             </h1>
-            <div className="flex items-center gap-2 lg:gap-3">
+            <div className="flex items-center gap-2 lg:gap-4">
               <span className="text-xs lg:text-sm text-gray-500 hidden sm:block">
                 {doctorTitle}
               </span>
@@ -114,6 +128,16 @@ export default function DoctorDevices() {
                   {(user?.firstName?.[0] || "?") + (user?.lastName?.[0] || "?")}
                 </span>
               </div>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Déconnexion"
+              >
+                <LogOut className="w-4 h-4 lg:w-5 lg:h-5" />
+                <span className="text-xs lg:text-sm hidden sm:block">
+                  Déconnexion
+                </span>
+              </button>
             </div>
           </div>
         </header>

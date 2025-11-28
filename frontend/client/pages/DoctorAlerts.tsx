@@ -7,8 +7,10 @@ import {
   CheckCircle,
   RefreshCw,
   Search,
+  LogOut,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { useNavigate } from "react-router-dom";
 import { getMeasurementsLastHours, MeasurementData } from "@/lib/api/influxdb";
 import { getDevices, Device } from "@/lib/api/devices";
 
@@ -43,9 +45,15 @@ export default function DoctorAlerts() {
   const [error, setError] = useState("");
   const [generatedAlerts, setGeneratedAlerts] = useState<Alert[]>([]);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const fullName = user ? `${user.firstName} ${user.lastName}` : "Utilisateur";
   const doctorTitle = user?.role === "DOCTOR" ? `Dr. ${fullName}` : fullName;
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
 
   useEffect(() => {
     loadData();
@@ -187,7 +195,7 @@ export default function DoctorAlerts() {
             <h1 className="text-lg lg:text-2xl font-semibold text-gray-900">
               Gestion des Alertes Patients
             </h1>
-            <div className="flex items-center gap-2 lg:gap-3">
+            <div className="flex items-center gap-2 lg:gap-4">
               <span className="text-xs lg:text-sm text-gray-500 hidden sm:block">
                 {doctorTitle}
               </span>
@@ -196,6 +204,16 @@ export default function DoctorAlerts() {
                   {(user?.firstName?.[0] || "?") + (user?.lastName?.[0] || "?")}
                 </span>
               </div>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Déconnexion"
+              >
+                <LogOut className="w-4 h-4 lg:w-5 lg:h-5" />
+                <span className="text-xs lg:text-sm hidden sm:block">
+                  Déconnexion
+                </span>
+              </button>
             </div>
           </div>
         </header>

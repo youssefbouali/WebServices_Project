@@ -1,9 +1,24 @@
 import { useState, useEffect } from "react";
 import DoctorSidebar from "@/components/DoctorSidebar";
-import { Search, ChevronLeft, ChevronRight, MoreVertical } from "lucide-react";
+import {
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  MoreVertical,
+  LogOut,
+  Edit2,
+  X,
+} from "lucide-react";
 import { useAuth } from "@/lib/auth";
-import { getPatientAppointments, Appointment } from "@/lib/api/appointments";
+import { useNavigate } from "react-router-dom";
+import {
+  getPatientAppointments,
+  Appointment,
+  cancelAppointment,
+  updateAppointment,
+} from "@/lib/api/appointments";
 import { getProfileById } from "@/lib/api/profiles";
+import { useToast } from "@/hooks/use-toast";
 
 type DisplayAppointment = Appointment & {
   patientInitials: string;
@@ -13,7 +28,6 @@ type DisplayAppointment = Appointment & {
   reason: string;
   time: string;
   date: string;
-  id: number;
 };
 
 export default function DoctorAppointments() {
@@ -21,9 +35,79 @@ export default function DoctorAppointments() {
   const [appointments, setAppointments] = useState<DisplayAppointment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-  const { user } = useAuth();
+  const [isActionLoading, setIsActionLoading] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editDate, setEditDate] = useState("");
+  const [editTime, setEditTime] = useState("");
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const fullName = user ? `${user.firstName} ${user.lastName}` : "Utilisateur";
   const doctorTitle = user?.role === "DOCTOR" ? `Dr. ${fullName}` : fullName;
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
+
+  const handleCancelAppointment = async (rdvId: number) => {
+    if (!confirm("Êtes-vous sûr de vouloir annuler ce rendez-vous?")) {
+      return;
+    }
+
+    try {
+      setIsActionLoading(true);
+      await cancelAppointment(rdvId);
+      toast({
+        title: "Succès",
+        description: "Rendez-vous annulé avec succès",
+      });
+      loadAppointments();
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Erreur lors de l'annulation";
+      toast({
+        title: "Erreur",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  const handleUpdateAppointment = async (rdvId: number) => {
+    if (!editDate || !editTime) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez sélectionner une date et heure",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsActionLoading(true);
+      const dateTimeString = `${editDate}T${editTime}:00`;
+      await updateAppointment(rdvId, dateTimeString);
+      toast({
+        title: "Succès",
+        description: "Rendez-vous mis à jour avec succès",
+      });
+      setEditingId(null);
+      loadAppointments();
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Erreur lors de la mise à jour";
+      toast({
+        title: "Erreur",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
 
   useEffect(() => {
     loadAppointments();
@@ -59,7 +143,6 @@ export default function DoctorAppointments() {
 
             return {
               ...appt,
-              id: appt.rdvId,
               patientInitials: (
                 patient.firstName[0] + patient.lastName[0]
               ).toUpperCase(),
@@ -75,7 +158,6 @@ export default function DoctorAppointments() {
           } catch (err) {
             return {
               ...appt,
-              id: appt.rdvId,
               patientInitials: "??",
               patientName: "Patient inconnu",
               doctorInitials: "??",
@@ -135,7 +217,7 @@ export default function DoctorAppointments() {
           <h1 className="text-[#1E293B] text-lg lg:text-2xl font-bold">
             Rendez-vous
           </h1>
-          <div className="flex items-center gap-2 lg:gap-3">
+          <div className="flex items-center gap-2 lg:gap-4">
             <span className="text-[#64748B] text-xs lg:text-sm hidden sm:block">
               {doctorTitle}
             </span>
@@ -144,6 +226,16 @@ export default function DoctorAppointments() {
                 {(user?.firstName?.[0] || "?") + (user?.lastName?.[0] || "?")}
               </span>
             </div>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-3 py-2 text-[#64748B] hover:text-[#1E293B] hover:bg-[#F1F5F9] rounded-lg transition-colors"
+              title="Déconnexion"
+            >
+              <LogOut className="w-4 h-4 lg:w-5 lg:h-5" />
+              <span className="text-xs lg:text-sm hidden sm:block">
+                Déconnexion
+              </span>
+            </button>
           </div>
         </header>
 
@@ -307,10 +399,36 @@ export default function DoctorAppointments() {
                   </div>
 
                   {/* Actions */}
-                  <div className="lg:col-span-3 absolute top-4 right-4 lg:static">
-                    <button className="w-7 h-7 rounded-full bg-[#F8FAFC] border border-[#E2E8F0] flex items-center justify-center hover:bg-[#E2E8F0] transition-colors">
-                      <MoreVertical className="w-3.5 h-3.5 text-[#64748B]" />
-                    </button>
+                  <div className="lg:col-span-3 flex items-center gap-2 absolute top-4 right-4 lg:static">
+                    {appointment.statut !== "annulé" && (
+                      <>
+                        <button
+                          onClick={() => {
+                            setEditingId(appointment.rdvId);
+                            setEditDate(appointment.dateRdv.split("T")[0]);
+                            setEditTime(
+                              appointment.dateRdv
+                                .split("T")[1]
+                                ?.substring(0, 5),
+                            );
+                          }}
+                          className="w-7 h-7 rounded-full bg-[#DBEAFE] flex items-center justify-center hover:bg-[#BFDBFE] transition-colors"
+                          title="Modifier"
+                        >
+                          <Edit2 className="w-3.5 h-3.5 text-[#2563EB]" />
+                        </button>
+                        <button
+                          onClick={() =>
+                            handleCancelAppointment(appointment.rdvId)
+                          }
+                          disabled={isActionLoading}
+                          className="w-7 h-7 rounded-full bg-[#FEE2E2] flex items-center justify-center hover:bg-[#FECACA] transition-colors disabled:opacity-50"
+                          title="Annuler"
+                        >
+                          <X className="w-3.5 h-3.5 text-[#EF4444]" />
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               ))}
@@ -337,6 +455,57 @@ export default function DoctorAppointments() {
           </div>
         </div>
       </div>
+
+      {/* Edit Modal */}
+      {editingId !== null && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <h3 className="text-[#1E293B] text-lg font-bold mb-4">
+              Modifier le Rendez-vous
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[#1E293B] text-sm font-bold mb-2">
+                  Nouvelle Date
+                </label>
+                <input
+                  type="date"
+                  value={editDate}
+                  onChange={(e) => setEditDate(e.target.value)}
+                  min={new Date().toISOString().split("T")[0]}
+                  className="w-full h-10 px-4 bg-[#F8FAFC] border border-[#E2E8F0] rounded-md text-sm text-[#1E293B] focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
+                />
+              </div>
+              <div>
+                <label className="block text-[#1E293B] text-sm font-bold mb-2">
+                  Nouvelle Heure
+                </label>
+                <input
+                  type="time"
+                  value={editTime}
+                  onChange={(e) => setEditTime(e.target.value)}
+                  className="w-full h-10 px-4 bg-[#F8FAFC] border border-[#E2E8F0] rounded-md text-sm text-[#1E293B] focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
+                />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setEditingId(null)}
+                className="flex-1 px-4 py-2 bg-[#F1F5F9] border border-[#E2E8F0] rounded-lg text-[#475569] hover:bg-[#E2E8F0] transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={() => handleUpdateAppointment(editingId)}
+                disabled={isActionLoading}
+                className="flex-1 px-4 py-2 bg-[#2563EB] text-white rounded-lg font-bold hover:bg-[#1E40AF] transition-colors disabled:opacity-50"
+              >
+                {isActionLoading ? "..." : "Enregistrer"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

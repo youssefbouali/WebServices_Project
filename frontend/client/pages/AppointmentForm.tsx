@@ -1,9 +1,12 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
-import { ChevronLeft } from "lucide-react";
+import { useAuth } from "@/lib/auth";
+import { ChevronLeft, LogOut } from "lucide-react";
 
 export default function AppointmentForm() {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     patient: "Ahmed Khalid",
     doctor: "Dr. Sara Ahmed - Cardiologie",
@@ -12,6 +15,11 @@ export default function AppointmentForm() {
     reason: "Suivi cardiaque - Contrôle régulier",
     notes: "",
   });
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +37,7 @@ export default function AppointmentForm() {
           <h1 className="text-[#1E293B] text-lg lg:text-2xl font-bold">
             Planifier un Nouveau Rendez-vous
           </h1>
-          <div className="flex items-center gap-2 lg:gap-3">
+          <div className="flex items-center gap-2 lg:gap-4">
             <span className="text-[#64748B] text-xs lg:text-sm hidden sm:block">
               Admin
             </span>
@@ -41,6 +49,16 @@ export default function AppointmentForm() {
                 />
               </svg>
             </div>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-3 py-2 text-[#64748B] hover:text-[#1E293B] hover:bg-[#F1F5F9] rounded-lg transition-colors"
+              title="Déconnexion"
+            >
+              <LogOut className="w-4 h-4 lg:w-5 lg:h-5" />
+              <span className="text-xs lg:text-sm hidden sm:block">
+                Déconnexion
+              </span>
+            </button>
           </div>
         </header>
 

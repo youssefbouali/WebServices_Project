@@ -8,7 +8,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./components/AuthProvider";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import Index from "./pages/Index";
+import { AuthenticatedRoute } from "./components/AuthenticatedRoute";
+import Landing from "./pages/Landing";
+import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import DeviceDashboard from "./pages/DeviceDashboard";
@@ -37,6 +39,7 @@ import DoctorTreatmentTracking from "./pages/DoctorTreatmentTracking";
 import PatientProfile from "./pages/PatientProfile";
 import PatientDevices from "./pages/PatientDevices";
 import DoctorDevices from "./pages/DoctorDevices";
+import PatientAppointmentForm from "./pages/PatientAppointmentForm";
 import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
@@ -50,8 +53,24 @@ const Root = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/register" element={<Register />} />
+            <Route path="/" element={<Landing />} />
+            <Route
+              path="/login"
+              element={
+                <AuthenticatedRoute>
+                  <Login />
+                </AuthenticatedRoute>
+              }
+            />
+            <Route
+              path="/register"
+              element={
+                <AuthenticatedRoute>
+                  <Register />
+                </AuthenticatedRoute>
+              }
+            />
+
             <Route
               path="/dashboard"
               element={
@@ -60,25 +79,9 @@ const Root = () => (
                 </ProtectedRoute>
               }
             />
+
             <Route path="/devices" element={<DevicesRedirect />} />
 
-            <Route
-              path="/patient/devices"
-              element={
-                <ProtectedRoute>
-                  <PatientDevices />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/doctor/devices"
-              element={
-                <ProtectedRoute>
-                  <DoctorDevices />
-                </ProtectedRoute>
-              }
-            />
             <Route
               path="/alerts"
               element={
@@ -120,30 +123,6 @@ const Root = () => (
               }
             />
             <Route
-              path="/profiles"
-              element={
-                <ProtectedRoute>
-                  <ProfilesDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/profiles/detail"
-              element={
-                <ProtectedRoute>
-                  <ProfileDetail />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/profiles/edit"
-              element={
-                <ProtectedRoute>
-                  <ProfileEdit />
-                </ProtectedRoute>
-              }
-            />
-            <Route
               path="/treatment-form"
               element={
                 <ProtectedRoute>
@@ -167,18 +146,52 @@ const Root = () => (
                 </ProtectedRoute>
               }
             />
+
+            <Route
+              path="/admin-dashboard"
+              element={
+                <ProtectedRoute allowedRoles={["ADMIN"]}>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/roles-management"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={["ADMIN"]}>
                   <RolesManagement />
                 </ProtectedRoute>
               }
             />
             <Route
+              path="/profiles"
+              element={
+                <ProtectedRoute allowedRoles={["ADMIN"]}>
+                  <ProfilesDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profiles/detail"
+              element={
+                <ProtectedRoute allowedRoles={["ADMIN"]}>
+                  <ProfileDetail />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profiles/edit"
+              element={
+                <ProtectedRoute allowedRoles={["ADMIN"]}>
+                  <ProfileEdit />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
               path="/doctor-dashboard"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={["DOCTOR"]}>
                   <DoctorDashboard />
                 </ProtectedRoute>
               }
@@ -186,7 +199,7 @@ const Root = () => (
             <Route
               path="/doctor/mes-patients"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={["DOCTOR"]}>
                   <DoctorPatients />
                 </ProtectedRoute>
               }
@@ -194,7 +207,15 @@ const Root = () => (
             <Route
               path="/doctor/rendez-vous"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={["DOCTOR"]}>
+                  <DoctorAppointments />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/doctor/appointments"
+              element={
+                <ProtectedRoute allowedRoles={["DOCTOR"]}>
                   <DoctorAppointments />
                 </ProtectedRoute>
               }
@@ -202,7 +223,7 @@ const Root = () => (
             <Route
               path="/doctor/alertes"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={["DOCTOR"]}>
                   <DoctorAlerts />
                 </ProtectedRoute>
               }
@@ -210,15 +231,24 @@ const Root = () => (
             <Route
               path="/doctor/suivi-traitements"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={["DOCTOR"]}>
                   <DoctorTreatmentTracking />
                 </ProtectedRoute>
               }
             />
             <Route
+              path="/doctor/devices"
+              element={
+                <ProtectedRoute allowedRoles={["DOCTOR"]}>
+                  <DoctorDevices />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
               path="/patient-dashboard"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={["PATIENT"]}>
                   <PatientDashboard />
                 </ProtectedRoute>
               }
@@ -226,7 +256,7 @@ const Root = () => (
             <Route
               path="/patient/profil"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={["PATIENT"]}>
                   <PatientProfile />
                 </ProtectedRoute>
               }
@@ -234,15 +264,31 @@ const Root = () => (
             <Route
               path="/patient/rendez-vous"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={["PATIENT"]}>
                   <PatientAppointments />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/patient/appointments"
+              element={
+                <ProtectedRoute allowedRoles={["PATIENT"]}>
+                  <PatientAppointments />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/patient/appointments/new"
+              element={
+                <ProtectedRoute allowedRoles={["PATIENT"]}>
+                  <PatientAppointmentForm />
                 </ProtectedRoute>
               }
             />
             <Route
               path="/patient/alertes"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={["PATIENT"]}>
                   <PatientAlerts />
                 </ProtectedRoute>
               }
@@ -250,19 +296,20 @@ const Root = () => (
             <Route
               path="/patient/suivi-traitements"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={["PATIENT"]}>
                   <PatientTreatmentTracking />
                 </ProtectedRoute>
               }
             />
             <Route
-              path="/admin-dashboard"
+              path="/patient/devices"
               element={
-                <ProtectedRoute>
-                  <AdminDashboard />
+                <ProtectedRoute allowedRoles={["PATIENT"]}>
+                  <PatientDevices />
                 </ProtectedRoute>
               }
             />
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

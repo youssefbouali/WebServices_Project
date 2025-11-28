@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import PatientSidebar from "@/components/PatientSidebar";
 import { Button } from "@/components/ui/button";
-import { Edit2, Mail, Phone, MapPin, Calendar } from "lucide-react";
+import { Edit2, Mail, Phone, MapPin, Calendar, LogOut } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { useNavigate } from "react-router-dom";
 import { getProfileById, Profile } from "@/lib/api/profiles";
 
 export default function PatientProfile() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -14,6 +16,11 @@ export default function PatientProfile() {
   const initials = user
     ? (user.firstName[0] + user.lastName[0]).toUpperCase()
     : "??";
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
 
   useEffect(() => {
     loadProfile();
@@ -46,7 +53,7 @@ export default function PatientProfile() {
           <h1 className="text-lg lg:text-2xl font-bold text-[#1E293B]">
             Mon Profil
           </h1>
-          <div className="flex items-center gap-2 lg:gap-3">
+          <div className="flex items-center gap-2 lg:gap-4">
             <span className="text-[#64748B] text-xs lg:text-sm hidden sm:block">
               {fullName}
             </span>
@@ -55,6 +62,16 @@ export default function PatientProfile() {
                 {initials}
               </span>
             </div>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-3 py-2 text-[#64748B] hover:text-[#1E293B] hover:bg-[#F1F5F9] rounded-lg transition-colors"
+              title="Déconnexion"
+            >
+              <LogOut className="w-4 h-4 lg:w-5 lg:h-5" />
+              <span className="text-xs lg:text-sm hidden sm:block">
+                Déconnexion
+              </span>
+            </button>
           </div>
         </header>
 

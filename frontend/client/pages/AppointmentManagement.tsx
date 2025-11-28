@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import { Search, ChevronLeft, ChevronRight, MoreVertical } from "lucide-react";
-import { getAllAppointments, Appointment } from "@/lib/api/appointments";
+import { useAuth } from "@/lib/auth";
+import { getPatientAppointments, Appointment } from "@/lib/api/appointments";
 import { getProfileById } from "@/lib/api/profiles";
 
 type DisplayAppointment = Appointment & {
@@ -13,8 +14,6 @@ type DisplayAppointment = Appointment & {
   reason: string;
   time: string;
   date: string;
-  id: number;
-  status: string;
 };
 
 export default function AppointmentManagement() {
@@ -22,6 +21,7 @@ export default function AppointmentManagement() {
   const [appointments, setAppointments] = useState<DisplayAppointment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const { user } = useAuth();
 
   useEffect(() => {
     loadAppointments();
@@ -31,21 +31,18 @@ export default function AppointmentManagement() {
     setIsLoading(true);
     setError("");
     try {
-      const rawAppointments = await getAllAppointments();
+      if (!user?.id) {
+        throw new Error("User not found");
+      }
+
+      const rawAppointments = await getPatientAppointments(parseInt(user.id));
 
       // Fetch patient and doctor details for each appointment
       const displayAppointments: DisplayAppointment[] = await Promise.all(
         rawAppointments.map(async (appt) => {
-            try {
+          try {
             const patient = await getProfileById(appt.patientId.toString());
-
-            // prefer server-provided doctorName (returned by planification service)
-            // fall back to calling profile service only when necessary
-            let doctorNameFromServer = (appt as any).doctorName as string | undefined | null;
-            let doctor = null;
-            if (!doctorNameFromServer) {
-              doctor = await getProfileById(appt.doctorId.toString());
-            }
+            const doctor = await getProfileById(appt.doctorId.toString());
 
             const dateObj = new Date(appt.dateRdv);
             const date = dateObj.toLocaleDateString("fr-FR", {
@@ -58,47 +55,23 @@ export default function AppointmentManagement() {
               minute: "2-digit",
             });
 
-            const computedDoctorName = doctorNameFromServer
-              ? doctorNameFromServer
-              : doctor
-              ? `${doctor.firstName} ${doctor.lastName}`
-              : "Docteur inconnu";
-
-            const computedDoctorInitials = doctorNameFromServer
-              ? doctorNameFromServer
-                  .split(" ")
-                  .filter(Boolean)
-                  .map((s) => s[0])
-                  .slice(0, 2)
-                  .join("")
-                  .toUpperCase()
-              : doctor
-              ? (doctor.firstName[0] + doctor.lastName[0]).toUpperCase()
-              : "??";
-
             return {
               ...appt,
-              id: appt.rdvId,
               patientInitials: (
                 patient.firstName[0] + patient.lastName[0]
               ).toUpperCase(),
               patientName: `${patient.firstName} ${patient.lastName}`,
-              doctorInitials: computedDoctorInitials,
-              doctorName: computedDoctorName,
+              doctorInitials: (
+                doctor.firstName[0] + doctor.lastName[0]
+              ).toUpperCase(),
+              doctorName: `${doctor.firstName} ${doctor.lastName}`,
               reason: "Consultation médicale",
               time,
               date,
-              status:
-                appt.statut === "confirmé"
-                  ? "Confirmé"
-                  : appt.statut === "en attente"
-                    ? "En attente"
-                    : "Annulé",
             };
           } catch (err) {
             return {
               ...appt,
-              id: appt.rdvId,
               patientInitials: "??",
               patientName: "Patient inconnu",
               doctorInitials: "??",
@@ -106,12 +79,6 @@ export default function AppointmentManagement() {
               reason: "Consultation",
               time: "??:??",
               date: "Date inconnue",
-              status:
-                appt.statut === "confirmé"
-                  ? "Confirmé"
-                  : appt.statut === "en attente"
-                    ? "En attente"
-                    : "Annulé",
             };
           }
         }),
@@ -153,28 +120,6 @@ export default function AppointmentManagement() {
     }
   };
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const startOfWeek = new Date(today);
-  const day = startOfWeek.getDay();
-  const diffToMonday = (day + 6) % 7;
-  startOfWeek.setDate(startOfWeek.getDate() - diffToMonday);
-  const endOfWeek = new Date(startOfWeek);
-  endOfWeek.setDate(startOfWeek.getDate() + 7);
-
-  const todayCount = appointments.filter((a) => {
-    const apptDate = new Date(a.dateRdv);
-    return apptDate.toDateString() === today.toDateString();
-  }).length;
-
-  const weekCount = appointments.filter((a) => {
-    const apptDate = new Date(a.dateRdv);
-    return apptDate >= startOfWeek && apptDate < endOfWeek;
-  }).length;
-
-  const pendingCount = appointments.filter((a) => a.statut === "en attente").length;
-  const cancelledCount = appointments.filter((a) => a.statut === "annulé").length;
-
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-[#F5F7FA]">
       <Sidebar />
@@ -208,7 +153,7 @@ export default function AppointmentManagement() {
               Aujourd'hui
             </p>
             <div className="text-[#2563EB] text-3xl lg:text-4xl font-bold mb-1">
-              {todayCount}
+              12
             </div>
             <p className="text-[#64748B] text-xs">rendez-vous</p>
           </div>
@@ -218,7 +163,7 @@ export default function AppointmentManagement() {
               Cette Semaine
             </p>
             <div className="text-[#10B981] text-3xl lg:text-4xl font-bold mb-1">
-              {weekCount}
+              48
             </div>
             <p className="text-[#64748B] text-xs">rendez-vous</p>
           </div>
@@ -226,7 +171,7 @@ export default function AppointmentManagement() {
           <div className="bg-white border border-[#E2E8F0] rounded-xl p-4 lg:p-8">
             <p className="text-[#64748B] text-xs lg:text-sm mb-1">En Attente</p>
             <div className="text-[#F59E0B] text-3xl lg:text-4xl font-bold mb-1">
-              {pendingCount}
+              8
             </div>
             <p className="text-[#64748B] text-xs">à confirmer</p>
           </div>
@@ -234,7 +179,7 @@ export default function AppointmentManagement() {
           <div className="bg-white border border-[#E2E8F0] rounded-xl p-4 lg:p-8">
             <p className="text-[#64748B] text-xs lg:text-sm mb-1">Annulés</p>
             <div className="text-[#EF4444] text-3xl lg:text-4xl font-bold mb-1">
-              {cancelledCount}
+              3
             </div>
             <p className="text-[#64748B] text-xs">ce mois</p>
           </div>
@@ -390,8 +335,7 @@ export default function AppointmentManagement() {
             {/* Pagination */}
             <div className="px-4 lg:px-8 py-4 lg:py-5 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-[#E2E8F0]">
               <span className="text-[#64748B] text-[13px]">
-                Affichage {appointments.length > 0 ? "1" : "0"}-
-                {appointments.length} sur {appointments.length} rendez-vous
+                Affichage 1-6 sur 48 rendez-vous
               </span>
               <div className="flex items-center gap-2">
                 <button className="w-10 h-9 bg-white border border-[#E2E8F0] rounded flex items-center justify-center hover:bg-[#F8FAFC] transition-colors">

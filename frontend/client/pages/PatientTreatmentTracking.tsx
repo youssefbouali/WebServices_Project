@@ -1,8 +1,14 @@
 import { useState, useEffect } from "react";
 import PatientSidebar from "@/components/PatientSidebar";
 import { Button } from "@/components/ui/button";
-import { Activity, ChevronLeft, CheckCircle, XCircle } from "lucide-react";
-import { Link } from "react-router-dom";
+import {
+  Activity,
+  ChevronLeft,
+  CheckCircle,
+  XCircle,
+  LogOut,
+} from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import {
   getPatientTreatments,
@@ -20,9 +26,15 @@ export default function PatientTreatmentTracking() {
   const [error, setError] = useState("");
   const [isValidating, setIsValidating] = useState(false);
   const [isSendingReminder, setIsSendingReminder] = useState(false);
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const fullName = user ? `${user.firstName} ${user.lastName}` : "Utilisateur";
   const CIRC = 2 * Math.PI * 40;
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
 
   const computeProgress = (t?: Treatment) => {
     if (!t) return 0;
@@ -121,6 +133,16 @@ export default function PatientTreatmentTracking() {
                 {(user?.firstName?.[0] || "?") + (user?.lastName?.[0] || "?")}
               </span>
             </div>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-3 py-2 text-[#64748B] hover:text-[#1E293B] hover:bg-[#F1F5F9] rounded-lg transition-colors"
+              title="Déconnexion"
+            >
+              <LogOut className="w-4 h-4 lg:w-5 lg:h-5" />
+              <span className="text-xs lg:text-sm hidden sm:block">
+                Déconnexion
+              </span>
+            </button>
           </div>
         </header>
 

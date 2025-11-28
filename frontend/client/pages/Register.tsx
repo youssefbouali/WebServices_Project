@@ -285,7 +285,10 @@ export default function Register() {
             {/* Sign In Link */}
             <p className="text-center text-sm">
               <span className="text-[#6B7280]">Vous avez déjà un compte? </span>
-              <Link to="/" className="text-[#2563EB] font-bold hover:underline">
+              <Link
+                to="/login"
+                className="text-[#2563EB] font-bold hover:underline"
+              >
                 Se connecter
               </Link>
             </p>

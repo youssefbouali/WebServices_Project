@@ -89,13 +89,6 @@ export default function TreatmentTracking() {
   };
 
   const currentTreatment = treatments.find((t) => t.statut === "ACTIF");
-  const latestTreatment =
-    treatments
-      .slice()
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
-  const recentlyAdded = latestTreatment
-    ? Date.now() - new Date(latestTreatment.createdAt).getTime() < 10 * 60 * 1000
-    : false;
   const patientInitials = patient
     ? (patient.firstName[0] + patient.lastName[0]).toUpperCase()
     : "??";
@@ -121,17 +114,6 @@ export default function TreatmentTracking() {
 
         {/* Main Content */}
         <main className="p-6 max-w-7xl mx-auto">
-          {recentlyAdded && latestTreatment && (
-            <div className="mb-6 rounded-xl border-2 border-[#86EFAC] bg-[#ECFDF5] p-4 text-[#065F46]">
-              <div className="flex items-center justify-between">
-                <div className="font-semibold">Traitement ajouté</div>
-                <span className="px-3 py-1 bg-[#D1FAE5] text-[#065F46] text-xs rounded-full">ACTIF</span>
-              </div>
-              <div className="mt-2 text-sm">
-                {latestTreatment.medicament} {latestTreatment.dosage} • {latestTreatment.frequence}
-              </div>
-            </div>
-          )}
           {/* Back Button */}
           <Link to="/profiles">
             <Button
@@ -247,7 +229,7 @@ export default function TreatmentTracking() {
                               {t.frequence} • {new Date(t.dateDebut).toLocaleString()} → {new Date(t.dateFin).toLocaleString()}
                             </p>
                           </div>
-                          <span className={`px-3 py-1 text-xs rounded-full ${t.statut === "ACTIF" ? "bg-[#D1FAE5] text-[#065F46]" : "bg-[#F1F5F9] text-[#475569]"}`}>
+                          <span className="px-3 py-1 bg-[#F1F5F9] text-[#475569] text-xs rounded-full">
                             {t.statut}
                           </span>
                         </div>

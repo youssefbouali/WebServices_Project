@@ -4,8 +4,6 @@ export interface Appointment {
   rdvId: number;
   patientId: number;
   doctorId: number;
-  // optional: planification service may return doctorName (we prefer this, avoids extra profile call)
-  doctorName?: string | null;
   dateRdv: string;
   statut: "confirmé" | "en attente" | "annulé";
 }
@@ -22,11 +20,8 @@ export interface CreateAppointmentRequest {
 export async function scheduleAppointment(
   data: CreateAppointmentRequest,
 ): Promise<Appointment> {
-  const base = API_BASE_URLS.APPOINTMENTS.replace(/\/$/, "");
-  const appointmentsBase = base.endsWith("/api") ? `${base}/appointments` : `${base}/api/appointments`;
-
   return apiFetch<Appointment>(
-    `${appointmentsBase}/schedule`,
+    `${API_BASE_URLS.APPOINTMENTS}/api/appointments/schedule`,
     {
       method: "POST",
       body: JSON.stringify(data),
@@ -40,11 +35,8 @@ export async function scheduleAppointment(
 export async function getPatientAppointments(
   patientId: number,
 ): Promise<Appointment[]> {
-  const base = API_BASE_URLS.APPOINTMENTS.replace(/\/$/, "");
-  const appointmentsBase = base.endsWith("/api") ? `${base}/appointments` : `${base}/api/appointments`;
-
   return apiFetch<Appointment[]>(
-    `${appointmentsBase}/patient/${patientId}`,
+    `${API_BASE_URLS.APPOINTMENTS}/api/appointments/patient/${patientId}`,
     {
       method: "GET",
     },
@@ -52,14 +44,13 @@ export async function getPatientAppointments(
 }
 
 /**
- * Get all appointments (admin view)
+ * Get all appointments for a doctor
  */
-export async function getAllAppointments(): Promise<Appointment[]> {
-  const base = API_BASE_URLS.APPOINTMENTS.replace(/\/$/, "");
-  const appointmentsBase = base.endsWith("/api") ? `${base}/appointments` : `${base}/api/appointments`;
-
+export async function getDoctorAppointments(
+  doctorId: number,
+): Promise<Appointment[]> {
   return apiFetch<Appointment[]>(
-    `${appointmentsBase}`,
+    `${API_BASE_URLS.APPOINTMENTS}/api/appointments/doctor/${doctorId}`,
     {
       method: "GET",
     },
@@ -70,11 +61,8 @@ export async function getAllAppointments(): Promise<Appointment[]> {
  * Cancel an appointment
  */
 export async function cancelAppointment(rdvId: number): Promise<void> {
-  const base = API_BASE_URLS.APPOINTMENTS.replace(/\/$/, "");
-  const appointmentsBase = base.endsWith("/api") ? `${base}/appointments` : `${base}/api/appointments`;
-
   return apiFetch<void>(
-    `${appointmentsBase}/cancel/${rdvId}`,
+    `${API_BASE_URLS.APPOINTMENTS}/api/appointments/cancel/${rdvId}`,
     {
       method: "PUT",
     },
@@ -89,13 +77,22 @@ export async function updateAppointment(
   nouvelleDate: string,
 ): Promise<Appointment> {
   const query = new URLSearchParams({ nouvelleDate });
-  const base = API_BASE_URLS.APPOINTMENTS.replace(/\/$/, "");
-  const appointmentsBase = base.endsWith("/api") ? `${base}/appointments` : `${base}/api/appointments`;
-
   return apiFetch<Appointment>(
-    `${appointmentsBase}/update/${rdvId}?${query}`,
+    `${API_BASE_URLS.APPOINTMENTS}/api/appointments/update/${rdvId}?${query}`,
     {
       method: "PUT",
+    },
+  );
+}
+
+/**
+ * Delete an appointment
+ */
+export async function deleteAppointment(rdvId: number): Promise<void> {
+  return apiFetch<void>(
+    `${API_BASE_URLS.APPOINTMENTS}/api/appointments/${rdvId}`,
+    {
+      method: "DELETE",
     },
   );
 }
