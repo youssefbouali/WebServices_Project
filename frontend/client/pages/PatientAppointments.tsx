@@ -14,7 +14,6 @@ type DisplayAppointment = Appointment & {
   reason: string;
   time: string;
   date: string;
-  id: number;
 };
 
 export default function PatientAppointments() {
@@ -26,11 +25,8 @@ export default function PatientAppointments() {
   const fullName = user ? `${user.firstName} ${user.lastName}` : "Utilisateur";
 
   useEffect(() => {
-    if (!user?.id) {
-      return;
-    }
     loadAppointments();
-  }, [statusFilter, user?.id]);
+  }, [statusFilter]);
 
   const loadAppointments = async () => {
     setIsLoading(true);
@@ -62,7 +58,6 @@ export default function PatientAppointments() {
 
             return {
               ...appt,
-              id: appt.rdvId,
               patientInitials: (
                 patient.firstName[0] + patient.lastName[0]
               ).toUpperCase(),
@@ -78,7 +73,6 @@ export default function PatientAppointments() {
           } catch (err) {
             return {
               ...appt,
-              id: appt.rdvId,
               patientInitials: "??",
               patientName: "Patient inconnu",
               doctorInitials: "??",

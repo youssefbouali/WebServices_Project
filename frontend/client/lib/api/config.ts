@@ -64,35 +64,9 @@ export async function apiFetch<T>(
       return {} as T;
     }
 
-    const contentType = response.headers.get("content-type") || "";
-    const contentLength = response.headers.get("content-length");
-
-    if (!contentType.includes("application/json")) {
-      const text = await response.text();
-      try {
-        const parsed = text ? JSON.parse(text) : {};
-        console.log(`✅ API Success:`, parsed);
-        return parsed as T;
-      } catch {
-        console.log(`✅ API Success (non-JSON):`, text);
-        return {} as T;
-      }
-    }
-
-    if (contentLength === "0") {
-      console.log(`✅ API Success (empty body)`);
-      return {} as T;
-    }
-
-    try {
-      const data = await response.json();
-      console.log(`✅ API Success:`, data);
-      return data;
-    } catch {
-      // Gracefully handle empty/invalid JSON
-      console.log(`✅ API Success (no parsable JSON)`);
-      return {} as T;
-    }
+    const data = await response.json();
+    console.log(`✅ API Success:`, data); // LOG pour debug
+    return data;
     
   } catch (error) {
     console.error(`❌ API Error:`, error); // LOG pour debug
