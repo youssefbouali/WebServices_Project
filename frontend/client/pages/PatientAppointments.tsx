@@ -26,8 +26,11 @@ export default function PatientAppointments() {
   const fullName = user ? `${user.firstName} ${user.lastName}` : "Utilisateur";
 
   useEffect(() => {
+    if (!user?.id) {
+      return;
+    }
     loadAppointments();
-  }, [statusFilter]);
+  }, [statusFilter, user?.id]);
 
   const loadAppointments = async () => {
     setIsLoading(true);

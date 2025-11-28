@@ -30,6 +30,12 @@ public class PlanificationController {
         return ResponseEntity.ok(appointment);
     }
 
+    // LISTER TOUS LES RDV
+    @GetMapping
+    public ResponseEntity<List<PlanificationResponse>> getAllAppointments() {
+        return ResponseEntity.ok(service.getAllAppointments());
+    }
+
     // LISTER LES RDV D'UN PATIENT
     @GetMapping("/patient/{patientId}")
     public ResponseEntity<List<PlanificationResponse>> getAppointments(@PathVariable Integer patientId) {

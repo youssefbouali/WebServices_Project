@@ -2,8 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import { Search, ChevronLeft, ChevronRight, MoreVertical } from "lucide-react";
-import { useAuth } from "@/lib/auth";
-import { getPatientAppointments, Appointment } from "@/lib/api/appointments";
+import { getAllAppointments, Appointment } from "@/lib/api/appointments";
 import { getProfileById } from "@/lib/api/profiles";
 
 type DisplayAppointment = Appointment & {
@@ -23,7 +22,6 @@ export default function AppointmentManagement() {
   const [appointments, setAppointments] = useState<DisplayAppointment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-  const { user } = useAuth();
 
   useEffect(() => {
     loadAppointments();
@@ -33,11 +31,7 @@ export default function AppointmentManagement() {
     setIsLoading(true);
     setError("");
     try {
-      if (!user?.id) {
-        throw new Error("User not found");
-      }
-
-      const rawAppointments = await getPatientAppointments(parseInt(user.id));
+      const rawAppointments = await getAllAppointments();
 
       // Fetch patient and doctor details for each appointment
       const displayAppointments: DisplayAppointment[] = await Promise.all(
@@ -159,6 +153,28 @@ export default function AppointmentManagement() {
     }
   };
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const startOfWeek = new Date(today);
+  const day = startOfWeek.getDay();
+  const diffToMonday = (day + 6) % 7;
+  startOfWeek.setDate(startOfWeek.getDate() - diffToMonday);
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 7);
+
+  const todayCount = appointments.filter((a) => {
+    const apptDate = new Date(a.dateRdv);
+    return apptDate.toDateString() === today.toDateString();
+  }).length;
+
+  const weekCount = appointments.filter((a) => {
+    const apptDate = new Date(a.dateRdv);
+    return apptDate >= startOfWeek && apptDate < endOfWeek;
+  }).length;
+
+  const pendingCount = appointments.filter((a) => a.statut === "en attente").length;
+  const cancelledCount = appointments.filter((a) => a.statut === "annulé").length;
+
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-[#F5F7FA]">
       <Sidebar />
@@ -192,7 +208,7 @@ export default function AppointmentManagement() {
               Aujourd'hui
             </p>
             <div className="text-[#2563EB] text-3xl lg:text-4xl font-bold mb-1">
-              12
+              {todayCount}
             </div>
             <p className="text-[#64748B] text-xs">rendez-vous</p>
           </div>
@@ -202,7 +218,7 @@ export default function AppointmentManagement() {
               Cette Semaine
             </p>
             <div className="text-[#10B981] text-3xl lg:text-4xl font-bold mb-1">
-              48
+              {weekCount}
             </div>
             <p className="text-[#64748B] text-xs">rendez-vous</p>
           </div>
@@ -210,7 +226,7 @@ export default function AppointmentManagement() {
           <div className="bg-white border border-[#E2E8F0] rounded-xl p-4 lg:p-8">
             <p className="text-[#64748B] text-xs lg:text-sm mb-1">En Attente</p>
             <div className="text-[#F59E0B] text-3xl lg:text-4xl font-bold mb-1">
-              8
+              {pendingCount}
             </div>
             <p className="text-[#64748B] text-xs">à confirmer</p>
           </div>
@@ -218,7 +234,7 @@ export default function AppointmentManagement() {
           <div className="bg-white border border-[#E2E8F0] rounded-xl p-4 lg:p-8">
             <p className="text-[#64748B] text-xs lg:text-sm mb-1">Annulés</p>
             <div className="text-[#EF4444] text-3xl lg:text-4xl font-bold mb-1">
-              3
+              {cancelledCount}
             </div>
             <p className="text-[#64748B] text-xs">ce mois</p>
           </div>
@@ -374,7 +390,8 @@ export default function AppointmentManagement() {
             {/* Pagination */}
             <div className="px-4 lg:px-8 py-4 lg:py-5 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-[#E2E8F0]">
               <span className="text-[#64748B] text-[13px]">
-                Affichage 1-6 sur 48 rendez-vous
+                Affichage {appointments.length > 0 ? "1" : "0"}-
+                {appointments.length} sur {appointments.length} rendez-vous
               </span>
               <div className="flex items-center gap-2">
                 <button className="w-10 h-9 bg-white border border-[#E2E8F0] rounded flex items-center justify-center hover:bg-[#F8FAFC] transition-colors">

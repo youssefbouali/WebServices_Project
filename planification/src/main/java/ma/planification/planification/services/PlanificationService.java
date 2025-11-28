@@ -36,34 +36,12 @@ public class PlanificationService {
 
     public List<PlanificationResponse> getAppointments(Integer patientId) {
         List<Planification> appointments = repository.findByPatientId(patientId);
-        List<PlanificationResponse> result = new ArrayList<>();
+        return buildResponses(appointments);
+    }
 
-        for (Planification appt : appointments) {
-            String doctorName = null;
-            try {
-                // use ProfileClient to fetch profile DTO
-                ProfileDto dto = profileClient.getProfileById(appt.getDoctorId());
-                if (dto != null) {
-                    String fn = dto.getFirstName() == null ? "" : dto.getFirstName();
-                    String ln = dto.getLastName() == null ? "" : dto.getLastName();
-                    String fullname = (fn + " " + ln).trim();
-                    doctorName = fullname.isEmpty() ? null : fullname;
-                }
-            } catch (Exception ignored) {
-                // keep null doctorName on any failures
-            }
-
-            PlanificationResponse r = new PlanificationResponse();
-            r.setRdvId(appt.getRdvId());
-            r.setPatientId(appt.getPatientId());
-            r.setDoctorId(appt.getDoctorId());
-            r.setDateRdv(appt.getDateRdv());
-            r.setStatut(appt.getStatut());
-            r.setDoctorName(doctorName);
-            result.add(r);
-        }
-
-        return result;
+    public List<PlanificationResponse> getAllAppointments() {
+        List<Planification> appointments = repository.findAll();
+        return buildResponses(appointments);
     }
 
     // Backwards-compatible helper used in tests / older callers
@@ -81,5 +59,39 @@ public class PlanificationService {
         Planification appointment = repository.findById(rdvId).orElseThrow();
         appointment.setDateRdv(nouvelleDate);
         return repository.save(appointment);
+    }
+
+    private List<PlanificationResponse> buildResponses(List<Planification> appointments) {
+        List<PlanificationResponse> result = new ArrayList<>();
+        for (Planification appt : appointments) {
+            result.add(mapToResponse(appt));
+        }
+        return result;
+    }
+
+    private PlanificationResponse mapToResponse(Planification appt) {
+        PlanificationResponse response = new PlanificationResponse();
+        response.setRdvId(appt.getRdvId());
+        response.setPatientId(appt.getPatientId());
+        response.setDoctorId(appt.getDoctorId());
+        response.setDateRdv(appt.getDateRdv());
+        response.setStatut(appt.getStatut());
+        response.setDoctorName(resolveDoctorName(appt.getDoctorId()));
+        return response;
+    }
+
+    private String resolveDoctorName(Integer doctorId) {
+        try {
+            ProfileDto dto = profileClient.getProfileById(doctorId);
+            if (dto == null) {
+                return null;
+            }
+            String fn = dto.getFirstName() == null ? "" : dto.getFirstName();
+            String ln = dto.getLastName() == null ? "" : dto.getLastName();
+            String fullname = (fn + " " + ln).trim();
+            return fullname.isEmpty() ? null : fullname;
+        } catch (Exception ignored) {
+            return null;
+        }
     }
 }

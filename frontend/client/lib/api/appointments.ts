@@ -22,8 +22,11 @@ export interface CreateAppointmentRequest {
 export async function scheduleAppointment(
   data: CreateAppointmentRequest,
 ): Promise<Appointment> {
+  const base = API_BASE_URLS.APPOINTMENTS.replace(/\/$/, "");
+  const appointmentsBase = base.endsWith("/api") ? `${base}/appointments` : `${base}/api/appointments`;
+
   return apiFetch<Appointment>(
-    `${API_BASE_URLS.APPOINTMENTS}/api/appointments/schedule`,
+    `${appointmentsBase}/schedule`,
     {
       method: "POST",
       body: JSON.stringify(data),
@@ -37,8 +40,26 @@ export async function scheduleAppointment(
 export async function getPatientAppointments(
   patientId: number,
 ): Promise<Appointment[]> {
+  const base = API_BASE_URLS.APPOINTMENTS.replace(/\/$/, "");
+  const appointmentsBase = base.endsWith("/api") ? `${base}/appointments` : `${base}/api/appointments`;
+
   return apiFetch<Appointment[]>(
-    `${API_BASE_URLS.APPOINTMENTS}/api/appointments/patient/${patientId}`,
+    `${appointmentsBase}/patient/${patientId}`,
+    {
+      method: "GET",
+    },
+  );
+}
+
+/**
+ * Get all appointments (admin view)
+ */
+export async function getAllAppointments(): Promise<Appointment[]> {
+  const base = API_BASE_URLS.APPOINTMENTS.replace(/\/$/, "");
+  const appointmentsBase = base.endsWith("/api") ? `${base}/appointments` : `${base}/api/appointments`;
+
+  return apiFetch<Appointment[]>(
+    `${appointmentsBase}`,
     {
       method: "GET",
     },
@@ -49,8 +70,11 @@ export async function getPatientAppointments(
  * Cancel an appointment
  */
 export async function cancelAppointment(rdvId: number): Promise<void> {
+  const base = API_BASE_URLS.APPOINTMENTS.replace(/\/$/, "");
+  const appointmentsBase = base.endsWith("/api") ? `${base}/appointments` : `${base}/api/appointments`;
+
   return apiFetch<void>(
-    `${API_BASE_URLS.APPOINTMENTS}/api/appointments/cancel/${rdvId}`,
+    `${appointmentsBase}/cancel/${rdvId}`,
     {
       method: "PUT",
     },
@@ -65,8 +89,11 @@ export async function updateAppointment(
   nouvelleDate: string,
 ): Promise<Appointment> {
   const query = new URLSearchParams({ nouvelleDate });
+  const base = API_BASE_URLS.APPOINTMENTS.replace(/\/$/, "");
+  const appointmentsBase = base.endsWith("/api") ? `${base}/appointments` : `${base}/api/appointments`;
+
   return apiFetch<Appointment>(
-    `${API_BASE_URLS.APPOINTMENTS}/api/appointments/update/${rdvId}?${query}`,
+    `${appointmentsBase}/update/${rdvId}?${query}`,
     {
       method: "PUT",
     },
