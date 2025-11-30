@@ -80,7 +80,8 @@ export default function DoctorTreatmentTracking() {
     if (!current) return;
     setIsValidating(true);
     try {
-      await validateDose(current.id, { datePrise: new Date().toISOString() });
+      const isoNoZ = new Date().toISOString().slice(0, 19);
+      await validateDose(current.id, { datePrise: isoNoZ });
       toast({
         title: "Prise validée",
         description: "La prise a été validée avec succès.",

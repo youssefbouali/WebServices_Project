@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Activity, ChevronLeft, Loader2 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { createTreatment } from "../lib/api/treatments";
 import { API_BASE_URLS, apiFetch } from "../lib/api/config";
@@ -25,10 +25,16 @@ export default function TreatmentForm() {
   const [error, setError] = useState("");
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const pid = params.get("patientId") || "";
+    if (pid) {
+      setFormData((prev) => ({ ...prev, patientId: pid }));
+    }
     loadPatients();
-  }, []);
+  }, [location.search]);
 
   const loadPatients = async () => {
     setIsLoading(true);
@@ -36,9 +42,9 @@ export default function TreatmentForm() {
     try {
       console.log("🔄 Chargement des patients depuis MongoDB...");
       
-      // ✅ Récupération automatique depuis MongoDB via Spring Boot
+      // ✅ Récupération depuis service Profiles via proxy frontend
       const patientsData = await apiFetch<any[]>(
-        `${API_BASE_URLS.TREATMENTS}/treatments/patients`
+        `${API_BASE_URLS.PROFILES}/public/patients`
       );
       
       console.log("✅ Patients chargés depuis MongoDB:", patientsData);
@@ -87,13 +93,14 @@ export default function TreatmentForm() {
       console.log("🔄 Création du traitement...", formData);
       
       // Formatage des dates pour Spring Boot
+      const formatNoZ = (v: string) => (v ? new Date(v).toISOString().slice(0, 19) : "");
       const treatmentData = {
         patientId: formData.patientId,
         medicament: formData.medicament,
         dosage: formData.dosage,
         frequence: formData.frequence,
-        dateDebut: formData.dateDebut ? new Date(formData.dateDebut).toISOString() : "",
-        dateFin: formData.dateFin ? new Date(formData.dateFin).toISOString() : "",
+        dateDebut: formatNoZ(formData.dateDebut),
+        dateFin: formatNoZ(formData.dateFin),
         instructions: formData.instructions,
       };
 

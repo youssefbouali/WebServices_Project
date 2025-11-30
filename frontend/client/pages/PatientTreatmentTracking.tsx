@@ -77,7 +77,8 @@ export default function PatientTreatmentTracking() {
     if (!current) return;
     setIsValidating(true);
     try {
-      await validateDose(current.id, { datePrise: new Date().toISOString() });
+      const isoNoZ = new Date().toISOString().slice(0, 19);
+      await validateDose(current.id, { datePrise: isoNoZ });
       toast({
         title: "Prise validée",
         description: "La prise a été validée avec succès.",
@@ -114,6 +115,47 @@ export default function PatientTreatmentTracking() {
   const patientInitials = patient
     ? (patient.firstName[0] + patient.lastName[0]).toUpperCase()
     : "??";
+  const today0 = new Date();
+  today0.setHours(0, 0, 0, 0);
+  const sameDay = (a: Date, b: Date) =>
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
+  const dayLabel = (d: Date) => ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"][d.getDay()];
+  const evolutionBars = (() => {
+    if (!currentTreatment) return [] as { label: string; height: number; color: string }[];
+    const start0 = new Date(currentTreatment.dateDebut);
+    start0.setHours(0, 0, 0, 0);
+    const end0 = new Date(currentTreatment.dateFin);
+    end0.setHours(23, 59, 59, 999);
+    const last = currentTreatment.lastDoseAt ? new Date(currentTreatment.lastDoseAt) : null;
+    const arr: { label: string; height: number; color: string }[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      d.setDate(d.getDate() - i);
+      const within = d >= start0 && d <= end0;
+      const isLast = last ? sameDay(d, last) : false;
+      const isPast = d < today0;
+      const isToday = sameDay(d, today0);
+      let height = 20;
+      let color = "#E2E8F0";
+      if (within) {
+        if (isPast) {
+          height = isLast ? 100 : 70;
+          color = isLast ? "#10B981" : "#3B82F6";
+        } else if (isToday) {
+          height = isLast ? 85 : 50;
+          color = isLast ? "#10B981" : "#3B82F6";
+        } else {
+          height = 30;
+          color = "#3B82F6";
+        }
+      }
+      arr.push({ label: dayLabel(d), height, color });
+    }
+    return arr;
+  })();
 
   return (
     <div className="flex min-h-screen bg-[#F5F7FA]">
@@ -133,6 +175,14 @@ export default function PatientTreatmentTracking() {
                 {(user?.firstName?.[0] || "?") + (user?.lastName?.[0] || "?")}
               </span>
             </div>
+            <Link
+              to={`/treatment-form?patientId=${user?.id ?? ""}`}
+              className="hidden sm:block"
+            >
+              <Button className="bg-[#10B981] hover:bg-[#059669] text-white">
+                Ajouter
+              </Button>
+            </Link>
             <button
               onClick={handleLogout}
               className="flex items-center gap-2 px-3 py-2 text-[#64748B] hover:text-[#1E293B] hover:bg-[#F1F5F9] rounded-lg transition-colors"
@@ -301,35 +351,19 @@ export default function PatientTreatmentTracking() {
                 <h3 className="text-lg font-bold text-[#1E293B] mb-4">
                   Évolution
                 </h3>
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="text-sm text-[#64748B]">Début: {currentTreatment ? new Date(currentTreatment.dateDebut).toLocaleString() : "-"}</div>
+                  <div className="text-sm text-[#64748B]">Fin: {currentTreatment ? new Date(currentTreatment.dateFin).toLocaleString() : "-"}</div>
+                  <div className="text-sm text-[#64748B]">Dernière prise: {currentTreatment?.lastDoseAt ? new Date(currentTreatment.lastDoseAt).toLocaleString() : "-"}</div>
+                  <div className="text-sm text-[#64748B]">Progression: {Math.round(computeProgress(currentTreatment))}%</div>
+                </div>
                 <div className="flex items-end justify-between h-32 gap-2">
-                  <div className="flex flex-col items-center flex-1">
-                    <div
-                      className="w-full bg-[#3B82F6] rounded-t"
-                      style={{ height: "50%" }}
-                    ></div>
-                    <span className="text-xs text-[#64748B] mt-2">Lun</span>
-                  </div>
-                  <div className="flex flex-col items-center flex-1">
-                    <div
-                      className="w-full bg-[#3B82F6] rounded-t"
-                      style={{ height: "65%" }}
-                    ></div>
-                    <span className="text-xs text-[#64748B] mt-2">Mar</span>
-                  </div>
-                  <div className="flex flex-col items-center flex-1">
-                    <div
-                      className="w-full bg-[#10B981] rounded-t"
-                      style={{ height: "80%" }}
-                    ></div>
-                    <span className="text-xs text-[#64748B] mt-2">Mer</span>
-                  </div>
-                  <div className="flex flex-col items-center flex-1">
-                    <div
-                      className="w-full bg-[#10B981] rounded-t"
-                      style={{ height: "100%" }}
-                    ></div>
-                    <span className="text-xs text-[#64748B] mt-2">Jeu</span>
-                  </div>
+                  {evolutionBars.map((b, i) => (
+                    <div key={i} className="flex flex-col items-center flex-1">
+                      <div className="w-full rounded-t" style={{ height: `${b.height}%`, backgroundColor: b.color }}></div>
+                      <span className="text-xs text-[#64748B] mt-2">{b.label}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>

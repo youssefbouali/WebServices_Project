@@ -13,6 +13,7 @@ export interface Treatment {
   statut: "ACTIF" | "INACTIF";
   createdAt: string;
   updatedAt: string;
+  lastDoseAt?: string;
 }
 
 export interface CreateTreatmentRequest {

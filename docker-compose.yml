@@ -176,9 +176,11 @@ services:
       - "8002:8002"
     restart: always
     networks:
-      - suivitraitement-network
-      - frontend-network
-      - profile-network
+      suivitraitement-network:
+      frontend-network:
+        aliases:
+          - suivitraitement-service
+      profile-network:
 
   # --- Frontend Next.js ---
   frontend_service:
@@ -187,13 +189,17 @@ services:
       dockerfile: Dockerfile
     container_name: frontend_service
     ports:
-      - "5000:5000"
+      - "5000:8080"
     environment:
       NODE_ENV: development
-      VITE_TREATMENTS_API_URL: http://suivitraitement_service:8002/api
-      VITE_PROFILES_API_URL: http://profile_service:3000/api
-      VITE_DEVICES_API_URL: http://device_service:8000/api
-      VITE_APPOINTMENTS_API_URL: http://planification_service:8082/api
+      # Client-side API base (browser) -> always use frontend proxy
+      VITE_TREATMENTS_API_URL: http://localhost:5000/api
+      VITE_PROFILES_API_URL: http://localhost:5000/api/profiles
+      VITE_DEVICES_API_URL: http://localhost:5000/api
+      VITE_APPOINTMENTS_API_URL: http://localhost:5000/api
+      # Server-side proxy targets (inside container)
+      TREATMENTS_URL: http://suivitraitement-service:8002
+      PROFILES_URL: http://profile_service:3000/api
     restart: unless-stopped
     networks:
       - frontend-network

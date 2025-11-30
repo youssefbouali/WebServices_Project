@@ -33,6 +33,8 @@ public class SuiviTraitement {
     private Boolean suiviCorrect = true;
     private String statut = "ACTIF";
 
+    private LocalDateTime lastDoseAt;
+
     @Column(updatable = false)
     private LocalDateTime createdAt;
 

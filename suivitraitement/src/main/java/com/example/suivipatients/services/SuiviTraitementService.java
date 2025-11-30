@@ -103,6 +103,7 @@ public class SuiviTraitementService {
                 .orElseThrow(() -> new RuntimeException("Traitement non trouvé avec ID: " + treatmentId));
 
         traitement.setSuiviCorrect(true);
+        traitement.setLastDoseAt(datePrise);
         traitementRepository.save(traitement);
 
         log.info("Prise validée pour le traitement {} à {}", treatmentId, datePrise);

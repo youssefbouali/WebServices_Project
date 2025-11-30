@@ -19,5 +19,81 @@ export function createServer() {
 
   app.get("/api/demo", handleDemo);
 
+  // Special redirect: old path to patients list should hit Profiles service
+  app.use("/api/treatments/patients", async (req, res) => {
+    const base = process.env.PROFILES_URL ?? "http://localhost:3000/api";
+    const target = base + "/profiles/public/patients";
+    try {
+      const response = await fetch(target, { method: "GET" });
+      const bodyText = await response.text();
+      res.status(response.status);
+      if (response.status === 204 || bodyText.length === 0) {
+        res.end();
+        return;
+      }
+      res.send(bodyText);
+    } catch (e) {
+      res.status(502).json({ message: "Bad gateway", details: String(e) });
+    }
+  });
+
+  app.use("/api/treatments", async (req, res) => {
+    const base = process.env.TREATMENTS_URL ?? "http://localhost:8002";
+    const suffix = req.originalUrl.replace(/^\/api\/treatments/, "/treatments");
+    const target = base + suffix;
+    try {
+      const hasBody = ["POST", "PUT", "PATCH"].includes(req.method);
+      const headers: Record<string, string> = {
+        ...(req.headers.authorization ? { Authorization: String(req.headers.authorization) } : {}),
+      };
+      if (hasBody) headers["Content-Type"] = "application/json";
+      if (req.headers.accept && typeof req.headers.accept === "string") headers["Accept"] = req.headers.accept;
+      const response = await fetch(target, {
+        method: req.method,
+        headers,
+        body: hasBody ? JSON.stringify(req.body) : undefined,
+      });
+      const contentType = response.headers.get("content-type") || "";
+      const bodyText = await response.text();
+      res.status(response.status);
+      if (response.status === 204 || bodyText.length === 0) {
+        res.end();
+        return;
+      }
+      res.send(bodyText);
+    } catch (e) {
+      res.status(502).json({ message: "Bad gateway", details: String(e) });
+    }
+  });
+
+  app.use("/api/profiles", async (req, res) => {
+    const base = process.env.PROFILES_URL ?? "http://localhost:3000/api";
+    const suffix = req.originalUrl.replace(/^\/api\/profiles/, "/profiles");
+    const target = base + suffix;
+    try {
+      const hasBody = ["POST", "PUT", "PATCH"].includes(req.method);
+      const headers: Record<string, string> = {
+        ...(req.headers.authorization ? { Authorization: String(req.headers.authorization) } : {}),
+      };
+      if (hasBody) headers["Content-Type"] = "application/json";
+      if (req.headers.accept && typeof req.headers.accept === "string") headers["Accept"] = req.headers.accept;
+      const response = await fetch(target, {
+        method: req.method,
+        headers,
+        body: hasBody ? JSON.stringify(req.body) : undefined,
+      });
+      const contentType = response.headers.get("content-type") || "";
+      const bodyText = await response.text();
+      res.status(response.status);
+      if (response.status === 204 || bodyText.length === 0) {
+        res.end();
+        return;
+      }
+      res.send(bodyText);
+    } catch (e) {
+      res.status(502).json({ message: "Bad gateway", details: String(e) });
+    }
+  });
+
   return app;
 }

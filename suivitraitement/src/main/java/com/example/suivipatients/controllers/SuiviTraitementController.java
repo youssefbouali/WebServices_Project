@@ -6,6 +6,12 @@ import com.example.suivipatients.services.SuiviTraitementService;
 import com.example.suivipatients.dtos.TreatmentUpdateRequest;
 import com.example.suivipatients.dtos.ValidateDoseRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +26,10 @@ import java.util.Map;
 public class SuiviTraitementController {
 
     private final SuiviTraitementService traitementService;
+    private final RestTemplate restTemplate;
+
+    @Value("${profiles.base-url:http://localhost:3000/api/profiles}")
+    private String profilesBaseUrl;
 
     @PostMapping
     public ResponseEntity<SuiviTraitement> createTreatment(@Valid @RequestBody TreatmentRequest request) {
@@ -93,5 +103,24 @@ public class SuiviTraitementController {
                 "activeTreatments", traitementService.getActiveTreatmentsCount(),
                 "treatmentsWithProblems", traitementService.getTreatmentsWithProblemsCount()
         ));
+    }
+
+    @GetMapping("/patients")
+    public ResponseEntity<List<Map<String, Object>>> getPatientsFromProfiles() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Content-Type", "application/json");
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+        try {
+            ResponseEntity<List> response = restTemplate.exchange(
+                    profilesBaseUrl + "/public/patients",
+                    HttpMethod.GET,
+                    entity,
+                    List.class
+            );
+            List<Map<String, Object>> patients = response.getBody();
+            return ResponseEntity.ok(patients == null ? List.of() : patients);
+        } catch (Exception e) {
+            return ResponseEntity.status(503).body(List.of());
+        }
     }
 }
