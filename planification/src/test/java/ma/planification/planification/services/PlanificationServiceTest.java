@@ -72,4 +72,53 @@ class PlanificationServiceTest {
         assertEquals(1, responses.size());
         assertNull(responses.get(0).getDoctorName());
     }
+
+    @Test
+    void scheduleAppointment_shouldCreateConfirmedAppointment_withStringIds() {
+        LocalDateTime at = LocalDateTime.of(2025, 2, 1, 9, 30);
+        Mockito.when(repository.save(Mockito.any())).thenAnswer(inv -> inv.getArgument(0));
+
+        Planification created = service.scheduleAppointment("p1", "d1", at);
+
+        assertEquals("p1", created.getPatientId());
+        assertEquals("d1", created.getDoctorId());
+        assertEquals(at, created.getDateRdv());
+        assertEquals("confirmé", created.getStatut());
+    }
+
+    @Test
+    void updateAppointment_shouldSetStatusEnAttente_andChangeDate() {
+        Planification existing = new Planification();
+        existing.setRdvId(5L);
+        existing.setPatientId("p5");
+        existing.setDoctorId("d5");
+        existing.setDateRdv(LocalDateTime.of(2025, 1, 1, 10, 0));
+        existing.setStatut("confirmé");
+
+        when(repository.findById(5L)).thenReturn(java.util.Optional.of(existing));
+        when(repository.save(Mockito.any())).thenAnswer(inv -> inv.getArgument(0));
+
+        LocalDateTime newDate = LocalDateTime.of(2025, 1, 2, 11, 0);
+        Planification updated = service.updateAppointment(5L, newDate);
+
+        assertEquals(newDate, updated.getDateRdv());
+        assertEquals("en attente", updated.getStatut());
+    }
+
+    @Test
+    void cancelAppointment_shouldSetStatusAnnule() {
+        Planification existing = new Planification();
+        existing.setRdvId(6L);
+        existing.setPatientId("p6");
+        existing.setDoctorId("d6");
+        existing.setDateRdv(LocalDateTime.of(2025, 3, 1, 8, 0));
+        existing.setStatut("confirmé");
+
+        when(repository.findById(6L)).thenReturn(java.util.Optional.of(existing));
+        when(repository.save(Mockito.any())).thenAnswer(inv -> inv.getArgument(0));
+
+        service.cancelAppointment(6L);
+
+        verify(repository).save(Mockito.argThat(a -> "annulé".equals(a.getStatut())));
+    }
 }

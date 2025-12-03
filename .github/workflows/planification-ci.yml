@@ -1,0 +1,28 @@
+name: Planification CI
+
+on:
+  push:
+    branches: ["main", "main2"]
+  pull_request:
+    branches: ["main", "main2"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "21"
+          cache: "maven"
+
+      - name: Run unit tests
+        working-directory: planification
+        run: |
+          chmod +x mvnw
+          ./mvnw -B -DskipTests=false test
+
