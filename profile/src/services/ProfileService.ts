@@ -36,7 +36,7 @@ export class ProfileService {
   }
 
   async getByEmailWithPassword(email: string): Promise<Profile | null> {
-    // ✅ FIX: Use findOne with proper selection
+  
     return this.repo.findOne({ 
       where: { email },
     });
