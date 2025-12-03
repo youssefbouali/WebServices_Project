@@ -1,4 +1,10 @@
-from pydantic import BaseModel
+try:
+    from pydantic import BaseModel, ConfigDict
+    _HAS_PYDANTIC_V2 = True
+except ImportError:
+    from pydantic import BaseModel  # type: ignore
+    ConfigDict = None  # type: ignore
+    _HAS_PYDANTIC_V2 = False
 from datetime import datetime
 
 class DeviceBase(BaseModel):
@@ -22,3 +28,7 @@ class Device(DeviceBase):
 
     class Config:
         orm_mode = True
+
+# Enable Pydantic v2 attribute parsing when available
+if _HAS_PYDANTIC_V2 and ConfigDict is not None:
+    Device.model_config = ConfigDict(from_attributes=True)

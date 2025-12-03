@@ -1,11 +1,16 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 from fastapi.testclient import TestClient
 import importlib
 
 
 def setup_sqlite():
-    engine = create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False})
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
     # Patch the device database before importing the app
     db = importlib.import_module("device.app.database")
     db.engine = engine
@@ -60,4 +65,3 @@ def test_device_endpoints():
     # Ensure gone
     resp = client.get(f"/devices/{device_id}")
     assert resp.status_code == 404
-

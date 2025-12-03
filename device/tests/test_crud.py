@@ -1,10 +1,15 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 from device.app import models, crud, schemas
 
 
 def setup_sqlite_session():
-    engine = create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False})
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
     models.Base.metadata.create_all(bind=engine)
     TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     return TestingSessionLocal()
@@ -41,4 +46,3 @@ def test_get_update_delete_device():
     deleted = crud.delete_device(db, dev.id)
     assert deleted is not None
     assert crud.get_device(db, dev.id) is None
-
