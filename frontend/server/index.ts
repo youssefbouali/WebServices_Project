@@ -97,7 +97,7 @@ export function createServer() {
 
 
   app.use("/api/device", async (req, res) => {
-    const base = process.env.PROFILES_URL ?? "http://localhost:3000/api";
+    const base = process.env.DEVICES_URL ?? "http://localhost:3000/api";
     const suffix = req.originalUrl.replace(/^\/api\/device/, "/device");
     const target = base + suffix;
     try {
@@ -125,7 +125,7 @@ export function createServer() {
     }
   });
   app.use("/api/appointments", async (req, res) => {
-    const base = process.env.PROFILES_URL ?? "http://localhost:3000/api";
+    const base = process.env.APPOINTMENTS_URL ?? "http://localhost:3000/api";
     const suffix = req.originalUrl.replace(/^\/api\/appointments/, "/appointments");
     const target = base + suffix;
     try {
