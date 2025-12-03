@@ -4,8 +4,8 @@ import java.time.LocalDateTime;
 
 public class PlanificationResponse {
     private Long rdvId;
-    private Integer patientId;
-    private Integer doctorId;
+    private String patientId;
+    private String doctorId;
     private LocalDateTime dateRdv;
     private String statut;
     private String doctorName;
@@ -15,11 +15,11 @@ public class PlanificationResponse {
     public Long getRdvId() { return rdvId; }
     public void setRdvId(Long rdvId) { this.rdvId = rdvId; }
 
-    public Integer getPatientId() { return patientId; }
-    public void setPatientId(Integer patientId) { this.patientId = patientId; }
+    public String getPatientId() { return patientId; }
+    public void setPatientId(String patientId) { this.patientId = patientId; }
 
-    public Integer getDoctorId() { return doctorId; }
-    public void setDoctorId(Integer doctorId) { this.doctorId = doctorId; }
+    public String getDoctorId() { return doctorId; }
+    public void setDoctorId(String doctorId) { this.doctorId = doctorId; }
 
     public LocalDateTime getDateRdv() { return dateRdv; }
     public void setDateRdv(LocalDateTime dateRdv) { this.dateRdv = dateRdv; }

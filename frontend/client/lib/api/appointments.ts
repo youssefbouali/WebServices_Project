@@ -2,15 +2,16 @@ import { API_BASE_URLS, apiFetch } from "./config";
 
 export interface Appointment {
   rdvId: number;
-  patientId: number;
-  doctorId: number;
+  patientId: string;
+  doctorId: string;
   dateRdv: string;
+  doctorName : string;
   statut: "confirmé" | "en attente" | "annulé";
 }
 
 export interface CreateAppointmentRequest {
-  patientId: number;
-  doctorId: number;
+  patientId: string;
+  doctorId: string;
   dateRdv: string;
 }
 
@@ -33,7 +34,7 @@ export async function scheduleAppointment(
  * Get all appointments for a patient
  */
 export async function getPatientAppointments(
-  patientId: number,
+  patientId: string,
 ): Promise<Appointment[]> {
   return apiFetch<Appointment[]>(
     `${API_BASE_URLS.APPOINTMENTS}/api/appointments/patient/${patientId}`,
@@ -47,7 +48,7 @@ export async function getPatientAppointments(
  * Get all appointments for a doctor
  */
 export async function getDoctorAppointments(
-  doctorId: number,
+  doctorId: string,
 ): Promise<Appointment[]> {
   return apiFetch<Appointment[]>(
     `${API_BASE_URLS.APPOINTMENTS}/api/appointments/doctor/${doctorId}`,

@@ -67,6 +67,12 @@ export async function listProfiles(
   return apiFetch<Profile[]>(url, { method: "GET" });
 }
 
+export async function listProfilesByRole(role: Profile["role"]): Promise<Profile[]> {
+  return apiFetch<Profile[]>(`${API_BASE_URLS.PROFILES}/role/${role}`, {
+    method: "GET",
+  });
+}
+
 export async function getProfileById(id: string): Promise<Profile> {
   return apiFetch<Profile>(`${API_BASE_URLS.PROFILES}/${id}`, {
     method: "GET",

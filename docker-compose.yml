@@ -139,6 +139,7 @@ services:
     restart: unless-stopped
     networks:
       - planification-network
+      - profile-network
 
   # --- Spring Boot Suivi Traitement ---
   postgres:

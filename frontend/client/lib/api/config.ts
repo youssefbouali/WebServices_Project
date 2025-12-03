@@ -7,9 +7,7 @@ export const API_BASE_URLS = {
     (import.meta.env as any).VITE_PROFILES_API_URL || import.meta.env.VITE_PROFILES ||
     "http://localhost:3000/api/profiles",
   DEVICES: import.meta.env.VITE_DEVICES || "http://localhost:8000",
-  APPOINTMENTS:
-    (import.meta.env as any).VITE_APPOINTMENTS_API_URL || import.meta.env.VITE_APPOINTMENTS ||
-    "http://localhost:8082",
+  APPOINTMENTS: import.meta.env.VITE_APPOINTMENTS || "http://localhost:8082",
   TREATMENTS:
     (import.meta.env as any).VITE_TREATMENTS_API_URL || import.meta.env.VITE_TREATMENTS ||
     "http://localhost:8002",

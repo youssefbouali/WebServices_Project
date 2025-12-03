@@ -10,19 +10,40 @@ import java.util.Arrays;
 @Configuration
 public class HttpConfig implements WebMvcConfigurer {
 
-    @Value("${app.cors.allowed-origins:}")
+    @Value("${APP_CORS_ALLOWED_ORIGINS:http://localhost:8080,http://localhost:5000,http://localhost:3000}")
     private String allowedOrigins;
+
+    @Value("${APP_CORS_ALLOWED_METHODS:GET,POST,PUT,DELETE,OPTIONS}")
+    private String allowedMethods;
+
+    @Value("${APP_CORS_ALLOWED_HEADERS:*}")
+    private String allowedHeaders;
+
+    @Value("${APP_CORS_ALLOW_CREDENTIALS:true}")
+    private boolean allowCredentials;
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        if (allowedOrigins != null && !allowedOrigins.isBlank()) {
-            String[] origins = Arrays.stream(allowedOrigins.split(",")).map(String::trim).toArray(String[]::new);
-            // Only enable CORS for planification endpoints (appointments)
-            registry.addMapping("/api/appointments/**")
-                    .allowedOrigins(origins)
-                    .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                    .allowedHeaders("*")
-                    .allowCredentials(true);
-        }
+        String[] origins = Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toArray(String[]::new);
+
+        String[] methods = Arrays.stream(allowedMethods.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toArray(String[]::new);
+
+        String[] headers = Arrays.stream(allowedHeaders.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toArray(String[]::new);
+
+        // Appliquer la configuration CORS à toutes les routes
+        registry.addMapping("/**")
+                .allowedOrigins(origins)
+                .allowedMethods(methods)
+                .allowedHeaders(headers)
+                .allowCredentials(allowCredentials);
     }
 }

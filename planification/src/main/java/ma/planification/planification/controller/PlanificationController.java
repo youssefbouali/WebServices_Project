@@ -38,7 +38,7 @@ public class PlanificationController {
 
     // LISTER LES RDV D'UN PATIENT
     @GetMapping("/patient/{patientId}")
-    public ResponseEntity<List<PlanificationResponse>> getAppointments(@PathVariable Integer patientId) {
+    public ResponseEntity<List<PlanificationResponse>> getAppointments(@PathVariable String patientId) {
         return ResponseEntity.ok(service.getAppointments(patientId));
     }
 

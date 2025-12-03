@@ -17,7 +17,6 @@ import {
   cancelAppointment,
   updateAppointment,
 } from "@/lib/api/appointments";
-import { getProfileById } from "@/lib/api/profiles";
 import { useToast } from "@/hooks/use-toast";
 
 type DisplayAppointment = Appointment & {
@@ -120,53 +119,49 @@ export default function PatientAppointments() {
         throw new Error("User not found");
       }
 
-      const rawAppointments = await getPatientAppointments(parseInt(user.id));
+      const rawAppointments = await getPatientAppointments(user.id);
 
-      // Fetch patient and doctor details for each appointment
-      const displayAppointments: DisplayAppointment[] = await Promise.all(
-        rawAppointments.map(async (appt) => {
-          try {
-            const patient = await getProfileById(appt.patientId.toString());
-            const doctor = await getProfileById(appt.doctorId.toString());
+      const displayAppointments: DisplayAppointment[] = rawAppointments.map(
+        (appt) => {
+          const dateObj = new Date(appt.dateRdv);
+          const date = dateObj.toLocaleDateString("fr-FR", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          });
+          const time = dateObj.toLocaleTimeString("fr-FR", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
 
-            const dateObj = new Date(appt.dateRdv);
-            const date = dateObj.toLocaleDateString("fr-FR", {
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-            });
-            const time = dateObj.toLocaleTimeString("fr-FR", {
-              hour: "2-digit",
-              minute: "2-digit",
-            });
+          const doctorName = appt.doctorName && appt.doctorName.trim().length > 0
+            ? appt.doctorName
+            : `Docteur #${appt.doctorId}`;
+          const doctorInitials = (doctorName
+            .replace(/^Dr\.?\s*/i, "")
+            .split(/\s+/)
+            .map((s) => s[0] || "")
+            .join("") || "?")
+            .toUpperCase();
 
-            return {
-              ...appt,
-              patientInitials: (
-                patient.firstName[0] + patient.lastName[0]
-              ).toUpperCase(),
-              patientName: `${patient.firstName} ${patient.lastName}`,
-              doctorInitials: (
-                doctor.firstName[0] + doctor.lastName[0]
-              ).toUpperCase(),
-              doctorName: `${doctor.firstName} ${doctor.lastName}`,
-              reason: "Consultation médicale",
-              time,
-              date,
-            };
-          } catch (err) {
-            return {
-              ...appt,
-              patientInitials: "??",
-              patientName: "Patient inconnu",
-              doctorInitials: "??",
-              doctorName: "Docteur inconnu",
-              reason: "Consultation",
-              time: "??:??",
-              date: "Date inconnue",
-            };
-          }
-        }),
+          const patientName = `${user?.firstName || "Patient"} ${
+            user?.lastName || ""
+          }`.trim();
+          const patientInitials = (
+            (user?.firstName?.[0] || "?") + (user?.lastName?.[0] || "?")
+          ).toUpperCase();
+
+          return {
+            ...appt,
+            patientInitials,
+            patientName,
+            doctorInitials,
+            doctorName,
+            reason: "Consultation médicale",
+            time,
+            date,
+          };
+        },
       );
 
       // Filter by status if needed
@@ -361,7 +356,7 @@ export default function PatientAppointments() {
             <div className="divide-y divide-[#E2E8F0]">
               {appointments.map((appointment) => (
                 <div
-                  key={appointment.id}
+                  key={appointment.rdvId}
                   className="px-4 lg:px-8 py-4 flex flex-col lg:grid lg:grid-cols-12 gap-2 lg:gap-4 items-start lg:items-center hover:bg-[#F8FAFC] transition-colors"
                 >
                   {/* Date & Time */}

@@ -25,7 +25,7 @@ public class PlanificationService {
     @Autowired
     private ProfileClient profileClient;
 
-    public Planification scheduleAppointment(Integer patientId, Integer doctorId, LocalDateTime dateRdv) {
+    public Planification scheduleAppointment(String patientId, String doctorId, LocalDateTime dateRdv) {
         Planification appointment = new Planification();
         appointment.setPatientId(patientId);
         appointment.setDoctorId(doctorId);
@@ -34,7 +34,7 @@ public class PlanificationService {
         return repository.save(appointment);
     }
 
-    public List<PlanificationResponse> getAppointments(Integer patientId) {
+    public List<PlanificationResponse> getAppointments(String patientId) {
         List<Planification> appointments = repository.findByPatientId(patientId);
         return buildResponses(appointments);
     }
@@ -45,7 +45,7 @@ public class PlanificationService {
     }
 
     // Backwards-compatible helper used in tests / older callers
-    public List<PlanificationResponse> getAppointmentsWithDoctorNames(Integer patientId) {
+    public List<PlanificationResponse> getAppointmentsWithDoctorNames(String patientId) {
         return getAppointments(patientId);
     }
 
@@ -58,6 +58,7 @@ public class PlanificationService {
     public Planification updateAppointment(Long rdvId, LocalDateTime nouvelleDate) {
         Planification appointment = repository.findById(rdvId).orElseThrow();
         appointment.setDateRdv(nouvelleDate);
+        appointment.setStatut("en attente");
         return repository.save(appointment);
     }
 
@@ -80,18 +81,22 @@ public class PlanificationService {
         return response;
     }
 
-    private String resolveDoctorName(Integer doctorId) {
-        try {
-            ProfileDto dto = profileClient.getProfileById(doctorId);
-            if (dto == null) {
-                return null;
-            }
-            String fn = dto.getFirstName() == null ? "" : dto.getFirstName();
-            String ln = dto.getLastName() == null ? "" : dto.getLastName();
-            String fullname = (fn + " " + ln).trim();
-            return fullname.isEmpty() ? null : fullname;
-        } catch (Exception ignored) {
-            return null;
-        }
+    private String resolveDoctorName(String doctorId) {
+  try {
+    ProfileDto dto = profileClient.getProfileById(doctorId);
+    if (dto == null) {
+      return null;
     }
+    String fn = dto.getFirstName() == null ? "" : dto.getFirstName();
+    System.out.println("First Name: " + fn);
+    String ln = dto.getLastName() == null ? "" : dto.getLastName();
+    System.out.println("Last Name: " + ln);
+    String fullname = (fn + " " + ln).trim();
+    return fullname.isEmpty() ? null : fullname;
+  } catch (Exception e) {
+    System.out.println("❌ ERREUR lors de l'appel à ProfileClient :file planificationservice");
+    e.printStackTrace();
+    return null;
+  }
+}
 }

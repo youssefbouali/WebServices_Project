@@ -4,7 +4,6 @@ import Sidebar from "@/components/Sidebar";
 import { Search, ChevronLeft, ChevronRight, MoreVertical } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { getPatientAppointments, Appointment } from "@/lib/api/appointments";
-import { getProfileById } from "@/lib/api/profiles";
 
 type DisplayAppointment = Appointment & {
   patientInitials: string;
@@ -35,53 +34,45 @@ export default function AppointmentManagement() {
         throw new Error("User not found");
       }
 
-      const rawAppointments = await getPatientAppointments(parseInt(user.id));
+      const rawAppointments = await getPatientAppointments(user.id);
 
-      // Fetch patient and doctor details for each appointment
-      const displayAppointments: DisplayAppointment[] = await Promise.all(
-        rawAppointments.map(async (appt) => {
-          try {
-            const patient = await getProfileById(appt.patientId.toString());
-            const doctor = await getProfileById(appt.doctorId.toString());
+      const displayAppointments: DisplayAppointment[] = rawAppointments.map(
+        (appt) => {
+          const dateObj = new Date(appt.dateRdv);
+          const date = dateObj.toLocaleDateString("fr-FR", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          });
+          const time = dateObj.toLocaleTimeString("fr-FR", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
 
-            const dateObj = new Date(appt.dateRdv);
-            const date = dateObj.toLocaleDateString("fr-FR", {
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-            });
-            const time = dateObj.toLocaleTimeString("fr-FR", {
-              hour: "2-digit",
-              minute: "2-digit",
-            });
+          const patientName = `Patient #${appt.patientId}`;
+          const patientInitials = "PT";
 
-            return {
-              ...appt,
-              patientInitials: (
-                patient.firstName[0] + patient.lastName[0]
-              ).toUpperCase(),
-              patientName: `${patient.firstName} ${patient.lastName}`,
-              doctorInitials: (
-                doctor.firstName[0] + doctor.lastName[0]
-              ).toUpperCase(),
-              doctorName: `${doctor.firstName} ${doctor.lastName}`,
-              reason: "Consultation médicale",
-              time,
-              date,
-            };
-          } catch (err) {
-            return {
-              ...appt,
-              patientInitials: "??",
-              patientName: "Patient inconnu",
-              doctorInitials: "??",
-              doctorName: "Docteur inconnu",
-              reason: "Consultation",
-              time: "??:??",
-              date: "Date inconnue",
-            };
-          }
-        }),
+          const doctorName = appt.doctorName && appt.doctorName.trim().length > 0
+            ? appt.doctorName
+            : `Docteur #${appt.doctorId}`;
+          const doctorInitials = (doctorName
+            .replace(/^Dr\.?\s*/i, "")
+            .split(/\s+/)
+            .map((s) => s[0] || "")
+            .join("") || "?")
+            .toUpperCase();
+
+          return {
+            ...appt,
+            patientInitials,
+            patientName,
+            doctorInitials,
+            doctorName,
+            reason: "Consultation médicale",
+            time,
+            date,
+          };
+        },
       );
 
       // Filter by status if needed

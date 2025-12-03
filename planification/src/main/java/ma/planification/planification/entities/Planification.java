@@ -16,11 +16,11 @@ public class Planification {
     @GeneratedValue(strategy = GenerationType.IDENTITY) // Auto-incrément pour SQL Server
     private Long rdvId; // ID rendez-vous
 
-    @Column(nullable = false)
-    private Integer patientId; // Référence au patient (de Profile)
+    @Column(nullable = false, length = 36)
+    private String patientId; // Référence au patient (de Profile)
 
-    @Column(nullable = false)
-    private Integer doctorId; // Référence au docteur (de Profile)
+    @Column(nullable = false, length = 36)
+    private String doctorId; // Référence au docteur (de Profile)
 
     @Column(name = "date_rdv", nullable = false)
     private LocalDateTime dateRdv; // Date du rendez-vous (utilisez LocalDateTime pour datetime)
@@ -36,19 +36,19 @@ public class Planification {
         this.rdvId = rdvId;
     }
 
-    public Integer getPatientId() {
+    public String getPatientId() {
         return patientId;
     }
 
-    public void setPatientId(Integer patientId) {
+    public void setPatientId(String patientId) {
         this.patientId = patientId;
     }
 
-    public Integer getDoctorId() {
+    public String getDoctorId() {
         return doctorId;
     }
 
-    public void setDoctorId(Integer doctorId) {
+    public void setDoctorId(String doctorId) {
         this.doctorId = doctorId;
     }
 

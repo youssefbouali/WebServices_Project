@@ -8,6 +8,8 @@ RUN mvn dependency:go-offline -B
 
 COPY src ./src
 
+COPY .env .
+
 # Compiler et générer le jar
 RUN mvn clean package -DskipTests
 

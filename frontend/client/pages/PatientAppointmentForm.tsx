@@ -7,7 +7,7 @@ import {
   scheduleAppointment,
   CreateAppointmentRequest,
 } from "@/lib/api/appointments";
-import { listProfiles } from "@/lib/api/profiles";
+import { listProfilesByRole } from "@/lib/api/profiles";
 import { useToast } from "@/hooks/use-toast";
 
 export default function PatientAppointmentForm() {
@@ -35,7 +35,7 @@ export default function PatientAppointmentForm() {
   const loadDoctors = async () => {
     try {
       setIsLoadingDoctors(true);
-      const data = await listProfiles({ role: "DOCTOR" });
+      const data = await listProfilesByRole("DOCTOR");
       setDoctors(data);
     } catch (err) {
       setError("Impossible de charger les docteurs");
@@ -73,8 +73,8 @@ export default function PatientAppointmentForm() {
       const dateTimeString = `${formData.dateRdv}T${formData.time}:00`;
 
       const appointmentData: CreateAppointmentRequest = {
-        patientId: parseInt(user.id),
-        doctorId: parseInt(formData.doctorId),
+        patientId: user.id,
+        doctorId: formData.doctorId,
         dateRdv: dateTimeString,
       };
 
