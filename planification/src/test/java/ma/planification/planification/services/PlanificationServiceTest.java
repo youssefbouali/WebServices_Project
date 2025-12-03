@@ -74,7 +74,7 @@ class PlanificationServiceTest {
     }
 
     @Test
-    void scheduleAppointment_shouldCreateConfirmedAppointment_withStringIds() {
+    void scheduleAppointment_shouldCreatePendingAppointment_withStringIds() {
         LocalDateTime at = LocalDateTime.of(2025, 2, 1, 9, 30);
         Mockito.when(repository.save(Mockito.any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -83,7 +83,7 @@ class PlanificationServiceTest {
         assertEquals("p1", created.getPatientId());
         assertEquals("d1", created.getDoctorId());
         assertEquals(at, created.getDateRdv());
-        assertEquals("confirmé", created.getStatut());
+        assertEquals("en attente", created.getStatut());
     }
 
     @Test

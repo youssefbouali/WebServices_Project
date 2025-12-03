@@ -30,7 +30,7 @@ public class PlanificationService {
         appointment.setPatientId(patientId);
         appointment.setDoctorId(doctorId);
         appointment.setDateRdv(dateRdv);
-        appointment.setStatut("En attente");
+        appointment.setStatut("en attente");
         return repository.save(appointment);
     }
 
