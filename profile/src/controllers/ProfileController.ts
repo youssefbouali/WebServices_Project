@@ -4,9 +4,16 @@ import { generateToken } from '../middleware/auth.middleware';
 import { CreateProfileDto, LoginDto, ProfileResponseDto, UpdateProfileDto } from '../dto/profile.dto';
 import { Profile, ProfileRole } from '../entities/Profile';
 
+/**
+ * Contrôleur des profils: gère l'inscription, l'authentification,
+ * les opérations sur le profil courant, les requêtes admin et basées sur les rôles.
+ */
 export class ProfileController {
   constructor(private readonly service: ProfileService) {}
 
+  /**
+   * Transforme une entité Profile en DTO envoyé au client.
+   */
   private toResponseDto(profile: Profile): ProfileResponseDto {
     return {
       id: profile.id.toString(),
