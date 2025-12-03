@@ -2,7 +2,7 @@ import { ProfileService } from './ProfileService';
 import { ProfileRole } from '../entities/Profile';
 import { validateOrReject } from 'class-validator';
 
-//  1. Mock la validation pour éviter les erreurs "unknownValue"
+// 1. Mock la validation pour éviter les erreurs "unknownValue"
 jest.mock('class-validator', () => {
   const actual = jest.requireActual('class-validator');
   return {
