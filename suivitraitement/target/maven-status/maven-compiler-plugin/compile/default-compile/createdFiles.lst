@@ -1,12 +1,10 @@
 com\example\suivipatients\config\RestTemplateConfig.class
-com\example\suivipatients\config\SecurityConfig.class
-com\example\suivipatients\SuiviPatientsApplication.class
-com\example\suivipatients\controllers\PatientsProxyController.class
-com\example\suivipatients\services\SuiviTraitementService.class
-com\example\suivipatients\dtos\TreatmentRequest.class
-com\example\suivipatients\models\ProfileSummary.class
 com\example\suivipatients\dtos\ValidateDoseRequest.class
+com\example\suivipatients\config\SecurityConfig.class
 com\example\suivipatients\repositories\SuiviTraitementRepository.class
+com\example\suivipatients\SuiviPatientsApplication.class
 com\example\suivipatients\controllers\SuiviTraitementController.class
 com\example\suivipatients\models\SuiviTraitement.class
+com\example\suivipatients\services\SuiviTraitementService.class
+com\example\suivipatients\dtos\TreatmentRequest.class
 com\example\suivipatients\dtos\TreatmentUpdateRequest.class

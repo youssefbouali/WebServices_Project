@@ -173,7 +173,7 @@ class SuiviTraitementControllerTest {
                 org.mockito.ArgumentMatchers.anyString(),
                 org.mockito.ArgumentMatchers.eq(HttpMethod.GET),
                 org.mockito.ArgumentMatchers.<HttpEntity<?>>any(),
-                org.mockito.ArgumentMatchers.eq(List.class)))
+                org.mockito.ArgumentMatchers.<org.springframework.core.ParameterizedTypeReference<List<Map<String,Object>>>>any()))
                 .thenReturn(ResponseEntity.ok((List) patients));
 
         mockMvc.perform(get("/treatments/patients"))

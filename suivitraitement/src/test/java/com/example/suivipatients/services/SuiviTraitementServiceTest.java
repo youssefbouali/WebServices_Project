@@ -44,8 +44,12 @@ class SuiviTraitementServiceTest {
         Map<String, Object> patient = new HashMap<>();
         patient.put("id", "1");
         List<Map<String, Object>> patients = List.of(patient);
-        when(restTemplate.exchange(eq("http://profiles/api/profiles/public/patients"), eq(HttpMethod.GET), any(HttpEntity.class), eq(List.class)))
-                .thenReturn(ResponseEntity.ok((List) patients));
+        org.mockito.Mockito.lenient().when(restTemplate.exchange(
+                eq("http://profiles/api/profiles/public/patients"),
+                eq(HttpMethod.GET),
+                any(HttpEntity.class),
+                org.mockito.ArgumentMatchers.<org.springframework.core.ParameterizedTypeReference<List<Map<String,Object>>>>any()
+        )).thenReturn(ResponseEntity.ok((List) patients));
 
         SuiviTraitement saved = new SuiviTraitement();
         saved.setId(1L);
@@ -72,8 +76,7 @@ class SuiviTraitementServiceTest {
         Map<String, Object> patient = new HashMap<>();
         patient.put("id", "1");
         List<Map<String, Object>> patients = List.of(patient);
-        when(restTemplate.exchange(eq("http://profiles/api/profiles/public/patients"), eq(HttpMethod.GET), any(HttpEntity.class), eq(List.class)))
-                .thenReturn(ResponseEntity.ok((List) patients));
+        // Pas de stubbing RestTemplate ici: la validation des dates échoue avant l'appel Profiles
 
         LocalDateTime start = LocalDateTime.now();
         LocalDateTime end = start.minusDays(1);
@@ -151,4 +154,3 @@ class SuiviTraitementServiceTest {
         assertEquals(2L, service.getTreatmentsWithProblemsCount());
     }
 }
-
