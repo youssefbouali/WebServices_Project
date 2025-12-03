@@ -1,2 +1,4 @@
-# Allowed origins for CORS in planification service. Comma-separated.
-CORS_ALLOWED_ORIGINS=http://localhost:5000,http://localhost:3000,http://frontend_service:8080
+APP_CORS_ALLOWED_ORIGINS=http://localhost:5000,http://localhost:3000,http://frontend_service:8080,http://localhost:8080
+APP_CORS_ALLOWED_METHODS=GET,POST,PUT,DELETE,PATCH,OPTIONS
+APP_CORS_ALLOWED_HEADERS=*
+APP_CORS_ALLOW_CREDENTIALS=true
