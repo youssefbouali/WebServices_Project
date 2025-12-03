@@ -100,7 +100,6 @@ export function createServer() {
     const base = process.env.DEVICES_URL ?? "http://localhost:3000/api";
     const suffix = req.originalUrl.replace(/^\/api\/device/, "/device");
     const target = base + suffix;
-	console.log(target);
     try {
       const hasBody = ["POST", "PUT", "PATCH"].includes(req.method);
       const headers: Record<string, string> = {
@@ -129,7 +128,6 @@ export function createServer() {
     const base = process.env.APPOINTMENTS_URL ?? "http://localhost:3000/api";
     const suffix = req.originalUrl.replace(/^\/api\/appointments/, "/appointments");
     const target = base + suffix;
-	console.log(target);
     try {
       const hasBody = ["POST", "PUT", "PATCH"].includes(req.method);
       const headers: Record<string, string> = {
