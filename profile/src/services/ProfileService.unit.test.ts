@@ -44,7 +44,7 @@ describe('ProfileService (unit)', () => {
     ).rejects.toThrow('Email already exists');
   });
 
-  // === Test 2 : création réussie ===
+  //=== Test 2 : création réussie ===
   it('create success', async () => {
     const repo = mockRepo();
     repo.findOne.mockResolvedValue(null);
@@ -83,7 +83,7 @@ describe('ProfileService (unit)', () => {
       phone: '1234567890',
     };
 
-    // 🧩 selon ton implémentation dans ProfileService.findById()
+    //selon ton implémentation dans ProfileService.findById()
     // si tu utilises repo.findOneBy({ id }), garde cette ligne :
     repo.findOneBy.mockResolvedValue(mockProfile);
 
