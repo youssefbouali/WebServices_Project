@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.example.suivipatients.services.SuiviTraitementServiceTest
+-------------------------------------------------------------------------------
+Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.104 s -- in com.example.suivipatients.services.SuiviTraitementServiceTest
