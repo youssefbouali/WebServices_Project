@@ -95,5 +95,63 @@ export function createServer() {
     }
   });
 
+
+  app.use("/api/device", async (req, res) => {
+    const base = process.env.PROFILES_URL ?? "http://localhost:3000/api";
+    const suffix = req.originalUrl.replace(/^\/api\/device/, "/device");
+    const target = base + suffix;
+    try {
+      const hasBody = ["POST", "PUT", "PATCH"].includes(req.method);
+      const headers: Record<string, string> = {
+        ...(req.headers.authorization ? { Authorization: String(req.headers.authorization) } : {}),
+      };
+      if (hasBody) headers["Content-Type"] = "application/json";
+      if (req.headers.accept && typeof req.headers.accept === "string") headers["Accept"] = req.headers.accept;
+      const response = await fetch(target, {
+        method: req.method,
+        headers,
+        body: hasBody ? JSON.stringify(req.body) : undefined,
+      });
+      const contentType = response.headers.get("content-type") || "";
+      const bodyText = await response.text();
+      res.status(response.status);
+      if (response.status === 204 || bodyText.length === 0) {
+        res.end();
+        return;
+      }
+      res.send(bodyText);
+    } catch (e) {
+      res.status(502).json({ message: "Bad gateway", details: String(e) });
+    }
+  });
+  app.use("/api/appointments", async (req, res) => {
+    const base = process.env.PROFILES_URL ?? "http://localhost:3000/api";
+    const suffix = req.originalUrl.replace(/^\/api\/appointments/, "/appointments");
+    const target = base + suffix;
+    try {
+      const hasBody = ["POST", "PUT", "PATCH"].includes(req.method);
+      const headers: Record<string, string> = {
+        ...(req.headers.authorization ? { Authorization: String(req.headers.authorization) } : {}),
+      };
+      if (hasBody) headers["Content-Type"] = "application/json";
+      if (req.headers.accept && typeof req.headers.accept === "string") headers["Accept"] = req.headers.accept;
+      const response = await fetch(target, {
+        method: req.method,
+        headers,
+        body: hasBody ? JSON.stringify(req.body) : undefined,
+      });
+      const contentType = response.headers.get("content-type") || "";
+      const bodyText = await response.text();
+      res.status(response.status);
+      if (response.status === 204 || bodyText.length === 0) {
+        res.end();
+        return;
+      }
+      res.send(bodyText);
+    } catch (e) {
+      res.status(502).json({ message: "Bad gateway", details: String(e) });
+    }
+  });
+
   return app;
 }
