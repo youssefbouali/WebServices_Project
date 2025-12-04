@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SuiviTraitementController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Suivi-Patients</a> &gt; <a href="index.source.html" class="el_package">com.example.suivipatients.controllers</a> &gt; <span class="el_source">SuiviTraitementController.java</span></div><h1>SuiviTraitementController.java</h1><pre class="source lang-java linenums">package com.example.suivipatients.controllers;
+
+import com.example.suivipatients.dtos.TreatmentRequest;
+import com.example.suivipatients.dtos.TreatmentUpdateRequest;
+import com.example.suivipatients.dtos.ValidateDoseRequest;
+import com.example.suivipatients.models.SuiviTraitement;
+import com.example.suivipatients.services.SuiviTraitementService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping(&quot;/treatments&quot;)
+public class SuiviTraitementController {
+    private final SuiviTraitementService service;
+    private final RestTemplate restTemplate;
+
+<span class="fc" id="L25">    public SuiviTraitementController(SuiviTraitementService service, RestTemplate restTemplate) {</span>
+<span class="fc" id="L26">        this.service = service;</span>
+<span class="fc" id="L27">        this.restTemplate = restTemplate;</span>
+<span class="fc" id="L28">    }</span>
+
+    @PostMapping
+    public ResponseEntity&lt;SuiviTraitement&gt; create(@RequestBody TreatmentRequest req) {
+<span class="fc" id="L32">        SuiviTraitement t = service.createTreatment(</span>
+<span class="fc" id="L33">                req.getPatientId(), req.getMedicament(), req.getDosage(), req.getFrequence(),</span>
+<span class="fc" id="L34">                req.getDateDebut(), req.getDateFin(), req.getInstructions()</span>
+        );
+<span class="fc" id="L36">        return ResponseEntity.status(201).body(t);</span>
+    }
+
+    @GetMapping
+    public ResponseEntity&lt;List&lt;SuiviTraitement&gt;&gt; list(@RequestParam(value = &quot;patientId&quot;, required = false) String patientId) {
+<span class="pc bpc" id="L41" title="1 of 4 branches missed.">        if (patientId != null &amp;&amp; !patientId.isEmpty()) {</span>
+<span class="fc" id="L42">            return ResponseEntity.ok(service.getTreatmentsByPatient(patientId));</span>
+        }
+<span class="fc" id="L44">        return ResponseEntity.ok(service.getAllTreatments());</span>
+    }
+
+    @GetMapping(&quot;/active&quot;)
+    public ResponseEntity&lt;List&lt;SuiviTraitement&gt;&gt; active() {
+<span class="fc" id="L49">        return ResponseEntity.ok(service.getActiveTreatments());</span>
+    }
+
+    @PutMapping(&quot;/{id}&quot;)
+    public ResponseEntity&lt;SuiviTraitement&gt; update(@PathVariable Long id, @RequestBody TreatmentUpdateRequest req) {
+<span class="fc" id="L54">        SuiviTraitement t = service.updateTreatment(id, req.getMedicament(), req.getDosage(), req.getFrequence(),</span>
+<span class="fc" id="L55">                req.getDateDebut(), req.getDateFin(), req.getInstructions(), req.getActif());</span>
+<span class="fc" id="L56">        return ResponseEntity.ok(t);</span>
+    }
+
+    @DeleteMapping(&quot;/{id}&quot;)
+    public ResponseEntity&lt;Void&gt; delete(@PathVariable Long id) {
+<span class="fc" id="L61">        service.deleteTreatment(id);</span>
+<span class="fc" id="L62">        return ResponseEntity.noContent().build();</span>
+    }
+
+    @PostMapping(&quot;/{id}/validate-dose&quot;)
+    public ResponseEntity&lt;Void&gt; validateDose(@PathVariable Long id, @RequestBody ValidateDoseRequest body) {
+<span class="fc" id="L67">        LocalDateTime d = body.getDatePrise();</span>
+<span class="fc" id="L68">        service.validateDose(id, d);</span>
+<span class="fc" id="L69">        return ResponseEntity.ok().build();</span>
+    }
+
+    @PostMapping(&quot;/{id}/send-reminder&quot;)
+    public ResponseEntity&lt;Void&gt; sendReminder(@PathVariable Long id) {
+<span class="fc" id="L74">        service.sendReminder(id);</span>
+<span class="fc" id="L75">        return ResponseEntity.ok().build();</span>
+    }
+
+    @GetMapping(&quot;/stats&quot;)
+    public ResponseEntity&lt;Map&lt;String, Long&gt;&gt; stats() {
+<span class="fc" id="L80">        return ResponseEntity.ok(Map.of(</span>
+<span class="fc" id="L81">                &quot;activeTreatments&quot;, service.getActiveTreatmentsCount(),</span>
+<span class="fc" id="L82">                &quot;treatmentsWithProblems&quot;, service.getTreatmentsWithProblemsCount()</span>
+        ));
+    }
+
+    @GetMapping(&quot;/patients&quot;)
+    public ResponseEntity&lt;List&lt;Map&lt;String, Object&gt;&gt;&gt; patients() {
+<span class="fc" id="L88">        ResponseEntity&lt;List&lt;Map&lt;String, Object&gt;&gt;&gt; resp = restTemplate.exchange(</span>
+                &quot;http://profiles/api/profiles/public/patients&quot;,
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+<span class="fc" id="L92">                new ParameterizedTypeReference&lt;List&lt;Map&lt;String, Object&gt;&gt;&gt;() {}</span>
+        );
+<span class="fc" id="L94">        return ResponseEntity.ok(resp.getBody());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

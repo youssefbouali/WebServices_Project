@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SuiviTraitementService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Suivi-Patients</a> &gt; <a href="index.source.html" class="el_package">com.example.suivipatients.services</a> &gt; <span class="el_source">SuiviTraitementService.java</span></div><h1>SuiviTraitementService.java</h1><pre class="source lang-java linenums">package com.example.suivipatients.services;
+
+import com.example.suivipatients.models.SuiviTraitement;
+import com.example.suivipatients.repositories.SuiviTraitementRepository;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.core.ParameterizedTypeReference;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+@Service
+public class SuiviTraitementService {
+    private final SuiviTraitementRepository repository;
+    private final RestTemplate restTemplate;
+
+    @Value(&quot;${profiles.base-url:http://profiles/api/profiles}&quot;)
+    private String profilesBaseUrl;
+
+    @Value(&quot;${profiles.api-token:}&quot;)
+    private String profilesApiToken;
+
+<span class="fc" id="L30">    public SuiviTraitementService(SuiviTraitementRepository repository, RestTemplate restTemplate) {</span>
+<span class="fc" id="L31">        this.repository = repository;</span>
+<span class="fc" id="L32">        this.restTemplate = restTemplate;</span>
+<span class="fc" id="L33">    }</span>
+
+    public SuiviTraitement createTreatment(String patientId, String medicament, String dosage, String frequence,
+                                           LocalDateTime dateDebut, LocalDateTime dateFin, String instructions) {
+<span class="pc bpc" id="L37" title="2 of 6 branches missed.">        if (dateDebut != null &amp;&amp; dateFin != null &amp;&amp; dateFin.isBefore(dateDebut)) {</span>
+<span class="fc" id="L38">            throw new IllegalArgumentException(&quot;La date de fin doit être après la date de début&quot;);</span>
+        }
+<span class="fc" id="L40">        validatePatientExists(patientId);</span>
+<span class="fc" id="L41">        SuiviTraitement t = new SuiviTraitement();</span>
+<span class="fc" id="L42">        t.setPatientId(patientId);</span>
+<span class="fc" id="L43">        t.setMedicament(medicament);</span>
+<span class="fc" id="L44">        t.setDosage(dosage);</span>
+<span class="fc" id="L45">        t.setFrequence(frequence);</span>
+<span class="fc" id="L46">        t.setDateDebut(dateDebut);</span>
+<span class="fc" id="L47">        t.setDateFin(dateFin);</span>
+<span class="fc" id="L48">        t.setInstructions(instructions);</span>
+<span class="fc" id="L49">        t.setStatut(&quot;ACTIF&quot;);</span>
+<span class="fc" id="L50">        t.setSuiviCorrect(Boolean.FALSE);</span>
+<span class="fc" id="L51">        return repository.save(t);</span>
+    }
+
+    public List&lt;SuiviTraitement&gt; getAllTreatments() {
+<span class="nc" id="L55">        return repository.findAll();</span>
+    }
+
+    public List&lt;SuiviTraitement&gt; getTreatmentsByPatient(String patientId) {
+<span class="nc" id="L59">        return repository.findByPatientId(patientId);</span>
+    }
+
+    public List&lt;SuiviTraitement&gt; getActiveTreatments() {
+<span class="fc" id="L63">        return repository.findTraitementsActifs(LocalDateTime.now());</span>
+    }
+
+    public SuiviTraitement updateTreatment(Long id, String medicament, String dosage, String frequence,
+                                           LocalDateTime dateDebut, LocalDateTime dateFin,
+                                           String instructions, Boolean actif) {
+<span class="fc" id="L69">        Optional&lt;SuiviTraitement&gt; opt = repository.findById(id);</span>
+<span class="pc bpc" id="L70" title="1 of 2 branches missed.">        if (opt.isEmpty()) throw new IllegalArgumentException(&quot;Traitement introuvable&quot;);</span>
+<span class="fc" id="L71">        SuiviTraitement t = opt.get();</span>
+<span class="pc bpc" id="L72" title="1 of 2 branches missed.">        if (medicament != null) t.setMedicament(medicament);</span>
+<span class="pc bpc" id="L73" title="1 of 2 branches missed.">        if (dosage != null) t.setDosage(dosage);</span>
+<span class="pc bpc" id="L74" title="1 of 2 branches missed.">        if (frequence != null) t.setFrequence(frequence);</span>
+<span class="pc bpc" id="L75" title="1 of 2 branches missed.">        if (dateDebut != null) t.setDateDebut(dateDebut);</span>
+<span class="pc bpc" id="L76" title="1 of 2 branches missed.">        if (dateFin != null) t.setDateFin(dateFin);</span>
+<span class="pc bpc" id="L77" title="1 of 2 branches missed.">        if (instructions != null) t.setInstructions(instructions);</span>
+<span class="pc bpc" id="L78" title="2 of 4 branches missed.">        if (actif != null) t.setStatut(actif ? &quot;ACTIF&quot; : &quot;INACTIF&quot;);</span>
+<span class="fc" id="L79">        return repository.save(t);</span>
+    }
+
+    public void deleteTreatment(Long id) {
+<span class="fc" id="L83">        Optional&lt;SuiviTraitement&gt; opt = repository.findById(id);</span>
+<span class="fc" id="L84">        opt.ifPresent(repository::delete);</span>
+<span class="fc" id="L85">    }</span>
+
+    public void validateDose(Long id, LocalDateTime datePrise) {
+<span class="fc" id="L88">        Optional&lt;SuiviTraitement&gt; opt = repository.findById(id);</span>
+<span class="pc bpc" id="L89" title="1 of 2 branches missed.">        if (opt.isEmpty()) throw new IllegalArgumentException(&quot;Traitement introuvable&quot;);</span>
+<span class="fc" id="L90">        SuiviTraitement t = opt.get();</span>
+<span class="fc" id="L91">        t.setSuiviCorrect(Boolean.TRUE);</span>
+<span class="fc" id="L92">        t.setLastDoseAt(datePrise);</span>
+<span class="fc" id="L93">        repository.save(t);</span>
+<span class="fc" id="L94">    }</span>
+
+<span class="nc" id="L96">    public void sendReminder(Long id) {}</span>
+
+    public long getActiveTreatmentsCount() {
+<span class="fc" id="L99">        return repository.findTraitementsActifs(LocalDateTime.now()).size();</span>
+    }
+
+    public long getTreatmentsWithProblemsCount() {
+<span class="fc" id="L103">        return repository.findBySuiviCorrectFalse().size();</span>
+    }
+
+    public List&lt;Map&lt;String, Object&gt;&gt; fetchPatients() {
+<span class="fc" id="L107">        HttpHeaders headers = new HttpHeaders();</span>
+<span class="pc bpc" id="L108" title="2 of 4 branches missed.">        if (profilesApiToken != null &amp;&amp; !profilesApiToken.isEmpty()) {</span>
+<span class="nc" id="L109">            headers.set(&quot;Authorization&quot;, &quot;Bearer &quot; + profilesApiToken);</span>
+        }
+<span class="fc" id="L111">        HttpEntity&lt;Void&gt; entity = new HttpEntity&lt;&gt;(headers);</span>
+<span class="fc" id="L112">        ResponseEntity&lt;List&lt;Map&lt;String, Object&gt;&gt;&gt; resp = restTemplate.exchange(</span>
+                profilesBaseUrl + &quot;/public/patients&quot;,
+                HttpMethod.GET,
+                entity,
+<span class="fc" id="L116">                new ParameterizedTypeReference&lt;List&lt;Map&lt;String, Object&gt;&gt;&gt;() {}</span>
+        );
+<span class="fc" id="L118">        return resp.getBody();</span>
+    }
+
+    private void validatePatientExists(String patientId) {
+<span class="fc" id="L122">        List&lt;Map&lt;String, Object&gt;&gt; patients = fetchPatients();</span>
+<span class="pc bpc" id="L123" title="2 of 4 branches missed.">        boolean ok = patients != null &amp;&amp; patients.stream().anyMatch(p -&gt; patientId.equals(String.valueOf(p.get(&quot;id&quot;))));</span>
+<span class="pc bpc" id="L124" title="1 of 2 branches missed.">        if (!ok) throw new IllegalArgumentException(&quot;Patient introuvable&quot;);</span>
+<span class="fc" id="L125">    }</span>
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
