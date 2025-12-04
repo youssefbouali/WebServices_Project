@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import {
   Heart,
@@ -12,15 +13,24 @@ import {
   RefreshCw,
   AlertTriangle,
   CheckCircle,
+  LogOut,
 } from "lucide-react";
 import { getMeasurementsLastHours } from "@/lib/api/influxdb";
 import type { MeasurementData } from "@/lib/api/influxdb";
+import { useAuth } from "@/lib/auth";
 
 export default function RealTimeMonitoring() {
   const [measurements, setMeasurements] = useState<MeasurementData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const fullName = user ? `${user.firstName} ${user.lastName}` : "Utilisateur";
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
 
   const loadMeasurements = async () => {
     setIsLoading(true);
@@ -78,7 +88,15 @@ export default function RealTimeMonitoring() {
               Suivi en Temps Réel
             </h1>
             <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-500">Admin</span>
+              <span className="text-sm text-gray-500">{fullName}</span>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Déconnexion"
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="text-xs lg:text-sm hidden sm:block">Déconnexion</span>
+              </button>
               <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
                 <Users className="w-5 h-5 text-white" />
               </div>
