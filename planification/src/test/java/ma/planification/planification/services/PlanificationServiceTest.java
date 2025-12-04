@@ -121,4 +121,44 @@ class PlanificationServiceTest {
 
         verify(repository).save(Mockito.argThat(a -> "annulé".equals(a.getStatut())));
     }
+
+    @Test
+    void getDoctorAppointments_shouldEnrichWithPatientNames_andDoctorName() {
+        Planification a1 = new Planification();
+        a1.setRdvId(10L);
+        a1.setPatientId("p1");
+        a1.setDoctorId("d1");
+        a1.setDateRdv(LocalDateTime.of(2025, 4, 1, 9, 0));
+        a1.setStatut("confirmé");
+
+        Planification a2 = new Planification();
+        a2.setRdvId(11L);
+        a2.setPatientId("p2");
+        a2.setDoctorId("d1");
+        a2.setDateRdv(LocalDateTime.of(2025, 4, 2, 10, 0));
+        a2.setStatut("en attente");
+
+        when(repository.findByDoctorId("d1")).thenReturn(List.of(a1, a2));
+
+        ProfileDto doctor = new ProfileDto();
+        doctor.setId("d1");
+        doctor.setFirstName("Alice");
+        doctor.setLastName("Smith");
+
+        ProfileDto patient1 = new ProfileDto();
+        patient1.setId("p1");
+        patient1.setFirstName("Bob");
+        patient1.setLastName("Brown");
+
+        when(profileClient.getProfileById("d1")).thenReturn(doctor);
+        when(profileClient.getProfileById("p1")).thenReturn(patient1);
+        when(profileClient.getProfileById("p2")).thenReturn(null);
+
+        List<PlanificationResponse> out = service.getDoctorAppointments("d1");
+
+        assertEquals(2, out.size());
+        assertEquals("Alice Smith", out.get(0).getDoctorName());
+        assertEquals("Bob Brown", out.get(0).getPatientName());
+        assertNull(out.get(1).getPatientName());
+    }
 }

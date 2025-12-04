@@ -42,6 +42,12 @@ public class PlanificationController {
         return ResponseEntity.ok(service.getAppointments(patientId));
     }
 
+    // LISTER LES RDV D'UN DOCTEUR
+    @GetMapping("/doctor/{doctorId}")
+    public ResponseEntity<List<PlanificationResponse>> getDoctorAppointments(@PathVariable String doctorId) {
+        return ResponseEntity.ok(service.getDoctorAppointments(doctorId));
+    }
+
     // ANNULER UN RDV
     @PutMapping("/cancel/{rdvId}")
     public ResponseEntity<Void> cancel(@PathVariable Long rdvId) {

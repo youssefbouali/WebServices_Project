@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface PlanificationRepository extends JpaRepository<Planification, Long> {
     List<Planification> findByPatientId(String patientId);
+    List<Planification> findByDoctorId(String doctorId);
 }

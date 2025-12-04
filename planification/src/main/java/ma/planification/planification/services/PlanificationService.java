@@ -39,6 +39,11 @@ public class PlanificationService {
         return buildResponses(appointments);
     }
 
+    public List<PlanificationResponse> getDoctorAppointments(String doctorId) {
+        List<Planification> appointments = repository.findByDoctorId(doctorId);
+        return buildResponses(appointments);
+    }
+
     public List<PlanificationResponse> getAllAppointments() {
         List<Planification> appointments = repository.findAll();
         return buildResponses(appointments);
@@ -78,25 +83,41 @@ public class PlanificationService {
         response.setDateRdv(appt.getDateRdv());
         response.setStatut(appt.getStatut());
         response.setDoctorName(resolveDoctorName(appt.getDoctorId()));
+        response.setPatientName(resolvePatientName(appt.getPatientId()));
         return response;
     }
 
     private String resolveDoctorName(String doctorId) {
-  try {
-    ProfileDto dto = profileClient.getProfileById(doctorId);
-    if (dto == null) {
-      return null;
+        try {
+            ProfileDto dto = profileClient.getProfileById(doctorId);
+            if (dto == null) {
+                return null;
+            }
+            String fn = dto.getFirstName() == null ? "" : dto.getFirstName();
+            System.out.println("First Name: " + fn);
+            String ln = dto.getLastName() == null ? "" : dto.getLastName();
+            System.out.println("Last Name: " + ln);
+            String fullname = (fn + " " + ln).trim();
+            return fullname.isEmpty() ? null : fullname;
+        } catch (Exception e) {
+            System.out.println("❌ ERREUR lors de l'appel à ProfileClient :file planificationservice");
+            e.printStackTrace();
+            return null;
+        }
     }
-    String fn = dto.getFirstName() == null ? "" : dto.getFirstName();
-    System.out.println("First Name: " + fn);
-    String ln = dto.getLastName() == null ? "" : dto.getLastName();
-    System.out.println("Last Name: " + ln);
-    String fullname = (fn + " " + ln).trim();
-    return fullname.isEmpty() ? null : fullname;
-  } catch (Exception e) {
-    System.out.println("❌ ERREUR lors de l'appel à ProfileClient :file planificationservice");
-    e.printStackTrace();
-    return null;
-  }
-}
+
+    private String resolvePatientName(String patientId) {
+        try {
+            ProfileDto dto = profileClient.getProfileById(patientId);
+            if (dto == null) {
+                return null;
+            }
+            String fn = dto.getFirstName() == null ? "" : dto.getFirstName();
+            String ln = dto.getLastName() == null ? "" : dto.getLastName();
+            String fullname = (fn + " " + ln).trim();
+            return fullname.isEmpty() ? null : fullname;
+        } catch (Exception e) {
+            return null;
+        }
+    }
 }

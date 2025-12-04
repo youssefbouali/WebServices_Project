@@ -12,7 +12,7 @@ import {
 import { useAuth } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
 import {
-  getPatientAppointments,
+  getDoctorAppointments,
   Appointment,
   cancelAppointment,
   updateAppointment,
@@ -120,7 +120,7 @@ export default function DoctorAppointments() {
         throw new Error("User not found");
       }
 
-      const rawAppointments = await getPatientAppointments(user.id);
+      const rawAppointments = await getDoctorAppointments(user.id);
 
       const displayAppointments: DisplayAppointment[] = rawAppointments.map(
         (appt) => {
@@ -135,8 +135,14 @@ export default function DoctorAppointments() {
             minute: "2-digit",
           });
 
-          const patientName = `Patient #${appt.patientId}`;
-          const patientInitials = "PT";
+          const patientName = appt.patientName && appt.patientName.trim().length > 0
+            ? appt.patientName
+            : `Patient #${appt.patientId}`;
+          const patientInitials = (patientName
+            .split(/\s+/)
+            .map((s) => s[0] || "")
+            .join("") || "PT")
+            .toUpperCase();
 
           const doctorName = appt.doctorName && appt.doctorName.trim().length > 0
             ? appt.doctorName

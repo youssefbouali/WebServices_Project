@@ -6,6 +6,7 @@ export interface Appointment {
   doctorId: string;
   dateRdv: string;
   doctorName : string;
+  patientName: string | null;
   statut: "confirmé" | "en attente" | "annulé";
 }
 
