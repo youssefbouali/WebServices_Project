@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import PatientSidebar from "@/components/PatientSidebar";
 import { useAuth } from "@/lib/auth";
-import { ChevronLeft, LogOut, AlertCircle } from "lucide-react";
+import { ChevronLeft, LogOut, AlertCircle, Activity } from "lucide-react";
 import {
   scheduleAppointment,
   CreateAppointmentRequest,
@@ -114,6 +114,14 @@ export default function PatientAppointmentForm() {
             <span className="text-[#64748B] text-xs lg:text-sm hidden sm:block">
               {fullName}
             </span>
+            <button
+              onClick={() => navigate("/monitoring")}
+              className="flex items-center gap-2 px-3 py-2 bg-[#2563EB] text-white hover:bg-[#1d4ed8] rounded-lg transition-colors text-xs lg:text-sm"
+              title="Monitoring"
+            >
+              <Activity className="w-4 h-4 lg:w-5 lg:h-5" />
+              <span className="hidden sm:inline">Monitoring</span>
+            </button>
             <button
               onClick={handleLogout}
               className="flex items-center gap-2 px-3 py-2 text-[#64748B] hover:text-[#1E293B] hover:bg-[#F1F5F9] rounded-lg transition-colors"

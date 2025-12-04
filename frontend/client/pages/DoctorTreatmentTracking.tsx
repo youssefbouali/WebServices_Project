@@ -141,6 +141,14 @@ export default function DoctorTreatmentTracking() {
               </span>
             </div>
             <button
+              onClick={() => navigate("/monitoring")}
+              className="flex items-center gap-2 px-3 py-2 bg-[#2563EB] text-white hover:bg-[#1d4ed8] rounded-lg transition-colors text-xs lg:text-sm"
+              title="Monitoring"
+            >
+              <Activity className="w-4 h-4 lg:w-5 lg:h-5" />
+              <span className="hidden sm:inline">Monitoring</span>
+            </button>
+            <button
               onClick={handleLogout}
               className="flex items-center gap-2 px-3 py-2 text-[#64748B] hover:text-[#1E293B] hover:bg-[#F1F5F9] rounded-lg transition-colors"
               title="Déconnexion"

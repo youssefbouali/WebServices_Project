@@ -175,6 +175,14 @@ export default function PatientTreatmentTracking() {
                 {(user?.firstName?.[0] || "?") + (user?.lastName?.[0] || "?")}
               </span>
             </div>
+            <button
+              onClick={() => navigate("/monitoring")}
+              className="flex items-center gap-2 px-3 py-2 bg-[#2563EB] text-white hover:bg-[#1d4ed8] rounded-lg transition-colors text-xs lg:text-sm"
+              title="Monitoring"
+            >
+              <Activity className="w-4 h-4 lg:w-5 lg:h-5" />
+              <span className="hidden sm:inline">Monitoring</span>
+            </button>
             <Link
               to={`/treatment-form?patientId=${user?.id ?? ""}`}
               className="hidden sm:block"

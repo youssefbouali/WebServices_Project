@@ -7,6 +7,7 @@ import {
   Users,
   Eye,
   LogOut,
+  Activity,
 } from "lucide-react";
 import { getDevices, Device } from "@/lib/api/devices";
 import {
@@ -128,6 +129,14 @@ export default function DoctorDevices() {
                   {(user?.firstName?.[0] || "?") + (user?.lastName?.[0] || "?")}
                 </span>
               </div>
+              <button
+                onClick={() => navigate("/monitoring")}
+                className="flex items-center gap-2 px-3 py-2 bg-[#2563EB] text-white hover:bg-[#1d4ed8] rounded-lg transition-colors text-xs lg:text-sm"
+                title="Monitoring"
+              >
+                <Activity className="w-4 h-4 lg:w-5 lg:h-5" />
+                <span className="hidden sm:inline">Monitoring</span>
+              </button>
               <button
                 onClick={handleLogout}
                 className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"

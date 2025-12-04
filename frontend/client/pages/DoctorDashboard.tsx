@@ -1,7 +1,7 @@
 import { useAuth } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
 import DoctorSidebar from "@/components/DoctorSidebar";
-import { Heart } from "lucide-react";
+import { Heart, Activity } from "lucide-react";
 
 export default function DoctorDashboard() {
   const { user, logout } = useAuth();
@@ -40,8 +40,15 @@ export default function DoctorDashboard() {
               {doctorTitle}
             </span>
             <button
+              onClick={() => navigate("/monitoring")}
+              className="h-9 px-4 bg-[#2563EB] text-white text-sm font-semibold rounded hover:bg-[#1d4ed8] transition-colors flex items-center gap-2"
+            >
+              <Activity className="w-4 h-4" />
+              Monitoring
+            </button>
+            <button
               onClick={handleLogout}
-              className="ml-8 h-9 px-4 bg-[#EF4444] text-white text-sm font-semibold rounded hover:bg-[#DC2626] transition-colors"
+              className="h-9 px-4 bg-[#EF4444] text-white text-sm font-semibold rounded hover:bg-[#DC2626] transition-colors"
             >
               Déconnexion
             </button>

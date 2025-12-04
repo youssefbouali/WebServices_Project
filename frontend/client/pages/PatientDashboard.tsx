@@ -1,7 +1,7 @@
 import PatientSidebar from "@/components/PatientSidebar";
 import { useAuth } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
-import { Heart } from "lucide-react";
+import { Heart, Activity } from "lucide-react";
 
 export default function PatientDashboard() {
   const { user, logout } = useAuth();
@@ -37,6 +37,13 @@ export default function PatientDashboard() {
               <span className="text-[#2563EB] text-xl font-bold">{initials}</span>
             </div>
             <span className="text-[#64748B] text-xs hidden lg:block">{fullName}</span>
+            <button
+              onClick={() => navigate("/monitoring")}
+              className="px-4 h-[32px] bg-[#2563EB] text-white text-[13px] font-bold rounded hover:bg-[#1d4ed8] transition-colors flex items-center gap-2"
+            >
+              <Activity className="w-4 h-4" />
+              Monitoring
+            </button>
             <button
               onClick={handleLogout}
               className="px-4 h-[32px] bg-[#EF4444] text-white text-[13px] font-bold rounded hover:bg-[#DC2626] transition-colors"

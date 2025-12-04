@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import DoctorSidebar from "@/components/DoctorSidebar";
 import { useAuth } from "@/lib/auth";
-import { LogOut, Search, Mail, Phone, AlertCircle } from "lucide-react";
+import { LogOut, Search, Mail, Phone, AlertCircle, Activity } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { listProfiles, Profile } from "@/lib/api/profiles";
 
@@ -60,6 +60,14 @@ export default function DoctorPatients() {
             <p className="text-[#64748B] text-sm hidden sm:block">
               {doctorTitle}
             </p>
+            <button
+              onClick={() => navigate("/monitoring")}
+              className="flex items-center gap-2 px-3 py-2 bg-[#2563EB] text-white hover:bg-[#1d4ed8] rounded-lg transition-colors text-xs lg:text-sm"
+              title="Monitoring"
+            >
+              <Activity className="w-4 h-4 lg:w-5 lg:h-5" />
+              <span className="hidden sm:inline">Monitoring</span>
+            </button>
             <button
               onClick={handleLogout}
               className="flex items-center gap-2 px-3 py-2 text-[#64748B] hover:text-[#1E293B] hover:bg-[#F1F5F9] rounded-lg transition-colors"

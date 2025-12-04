@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import PatientSidebar from "@/components/PatientSidebar";
 import { Button } from "@/components/ui/button";
-import { Edit2, Mail, Phone, MapPin, Calendar, LogOut } from "lucide-react";
+import { Edit2, Mail, Phone, MapPin, Calendar, LogOut, Activity } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
 import { getProfileById, Profile } from "@/lib/api/profiles";
@@ -62,6 +62,14 @@ export default function PatientProfile() {
                 {initials}
               </span>
             </div>
+            <button
+              onClick={() => navigate("/monitoring")}
+              className="flex items-center gap-2 px-3 py-2 bg-[#2563EB] text-white hover:bg-[#1d4ed8] rounded-lg transition-colors text-xs lg:text-sm"
+              title="Monitoring"
+            >
+              <Activity className="w-4 h-4 lg:w-5 lg:h-5" />
+              <span className="hidden sm:inline">Monitoring</span>
+            </button>
             <button
               onClick={handleLogout}
               className="flex items-center gap-2 px-3 py-2 text-[#64748B] hover:text-[#1E293B] hover:bg-[#F1F5F9] rounded-lg transition-colors"
