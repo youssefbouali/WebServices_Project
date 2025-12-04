@@ -98,3 +98,12 @@ export async function deleteAppointment(rdvId: number): Promise<void> {
     },
   );
 }
+
+export async function confirmAppointment(rdvId: number): Promise<void> {
+  return apiFetch<void>(
+    `${API_BASE_URLS.APPOINTMENTS}/api/appointments/confirm/${rdvId}`,
+    {
+      method: "PUT",
+    },
+  );
+}

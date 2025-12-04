@@ -60,6 +60,12 @@ public class PlanificationService {
         repository.save(appointment);
     }
 
+    public void confirmAppointment(Long rdvId) {
+        Planification appointment = repository.findById(rdvId).orElseThrow();
+        appointment.setStatut("confirmé");
+        repository.save(appointment);
+    }
+
     public Planification updateAppointment(Long rdvId, LocalDateTime nouvelleDate) {
         Planification appointment = repository.findById(rdvId).orElseThrow();
         appointment.setDateRdv(nouvelleDate);

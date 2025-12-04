@@ -123,6 +123,23 @@ class PlanificationServiceTest {
     }
 
     @Test
+    void confirmAppointment_shouldSetStatusConfirme() {
+        Planification existing = new Planification();
+        existing.setRdvId(7L);
+        existing.setPatientId("p7");
+        existing.setDoctorId("d7");
+        existing.setDateRdv(LocalDateTime.of(2025, 3, 1, 8, 0));
+        existing.setStatut("en attente");
+
+        when(repository.findById(7L)).thenReturn(java.util.Optional.of(existing));
+        when(repository.save(Mockito.any())).thenAnswer(inv -> inv.getArgument(0));
+
+        service.confirmAppointment(7L);
+
+        verify(repository).save(Mockito.argThat(a -> "confirmé".equals(a.getStatut())));
+    }
+
+    @Test
     void getDoctorAppointments_shouldEnrichWithPatientNames_andDoctorName() {
         Planification a1 = new Planification();
         a1.setRdvId(10L);

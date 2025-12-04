@@ -55,6 +55,13 @@ public class PlanificationController {
         return ResponseEntity.ok().build();
     }
 
+    // CONFIRMER UN RDV
+    @PutMapping("/confirm/{rdvId}")
+    public ResponseEntity<Void> confirm(@PathVariable Long rdvId) {
+        service.confirmAppointment(rdvId);
+        return ResponseEntity.ok().build();
+    }
+
     // MODIFIER UN RDV
     @PutMapping("/update/{rdvId}")
     public ResponseEntity<Planification> update(

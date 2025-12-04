@@ -16,6 +16,7 @@ import {
   Appointment,
   cancelAppointment,
   updateAppointment,
+  confirmAppointment,
 } from "@/lib/api/appointments";
 import { useToast } from "@/hooks/use-toast";
 
@@ -103,6 +104,24 @@ export default function DoctorAppointments() {
         description: message,
         variant: "destructive",
       });
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  const handleConfirmAppointment = async (rdvId: number) => {
+    try {
+      setIsActionLoading(true);
+      await confirmAppointment(rdvId);
+      toast({
+        title: "Succès",
+        description: "Rendez-vous confirmé",
+      });
+      loadAppointments();
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Erreur lors de la confirmation";
+      toast({ title: "Erreur", description: message, variant: "destructive" });
     } finally {
       setIsActionLoading(false);
     }
@@ -399,6 +418,15 @@ export default function DoctorAppointments() {
                   <div className="lg:col-span-3 flex items-center gap-2 absolute top-4 right-4 lg:static">
                     {appointment.statut !== "annulé" && (
                       <>
+                        {(appointment.statut === "en attente" || appointment.statut === "En attente") && (
+                          <button
+                            onClick={() => handleConfirmAppointment(appointment.rdvId)}
+                            disabled={isActionLoading}
+                            className="px-3 h-7 rounded bg-[#D1FAE5] text-[#065F46] text-xs font-bold hover:bg-[#A7F3D0] transition-colors disabled:opacity-50"
+                          >
+                            Confirmer
+                          </button>
+                        )}
                         <button
                           onClick={() => {
                             setEditingId(appointment.rdvId);
