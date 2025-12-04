@@ -1,6 +1,8 @@
 com\example\suivipatients\config\RestTemplateConfig.class
 com\example\suivipatients\config\SecurityConfig.class
+com\example\suivipatients\controllers\SuiviTraitementController$1.class
 com\example\suivipatients\SuiviPatientsApplication.class
+com\example\suivipatients\services\SuiviTraitementService$1.class
 com\example\suivipatients\services\SuiviTraitementService.class
 com\example\suivipatients\dtos\TreatmentRequest.class
 com\example\suivipatients\dtos\ValidateDoseRequest.class
