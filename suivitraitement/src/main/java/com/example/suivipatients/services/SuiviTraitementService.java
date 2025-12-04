@@ -27,6 +27,9 @@ public class SuiviTraitementService {
     @Value("${profiles.api-token:}")
     private String profilesApiToken;
 
+    @Value("${profiles.enabled:true}")
+    private boolean profilesEnabled;
+
     public SuiviTraitementService(SuiviTraitementRepository repository, RestTemplate restTemplate) {
         this.repository = repository;
         this.restTemplate = restTemplate;
@@ -37,7 +40,9 @@ public class SuiviTraitementService {
         if (dateDebut != null && dateFin != null && dateFin.isBefore(dateDebut)) {
             throw new IllegalArgumentException("La date de fin doit être après la date de début");
         }
-        validatePatientExists(patientId);
+        if (profilesEnabled) {
+            validatePatientExists(patientId);
+        }
         SuiviTraitement t = new SuiviTraitement();
         t.setPatientId(patientId);
         t.setMedicament(medicament);

@@ -1,4 +1,284 @@
 -------------------------------------------------------------------------------
 Test set: com.example.suivipatients.services.SuiviTraitementServiceTest
 -------------------------------------------------------------------------------
-Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.069 s -- in com.example.suivipatients.services.SuiviTraitementServiceTest
+Tests run: 7, Failures: 0, Errors: 7, Skipped: 0, Time elapsed: 5.017 s <<< FAILURE! -- in com.example.suivipatients.services.SuiviTraitementServiceTest
+com.example.suivipatients.services.SuiviTraitementServiceTest.createTreatment_fail_invalidDates -- Time elapsed: 3.923 s <<< ERROR!
+org.mockito.exceptions.misusing.InjectMocksException: 
+
+Cannot instantiate @InjectMocks field named 'service' of type 'class com.example.suivipatients.services.SuiviTraitementService'.
+You haven't provided the instance at field declaration so I tried to construct the instance.
+However the constructor or the initialization block threw an exception : Unresolved compilation problems: 
+	Duplicate field SuiviTraitementService.profilesEnabled
+	Duplicate field SuiviTraitementService.profilesEnabled
+
+
+	at org.mockito.junit.jupiter.MockitoExtension.beforeEach(MockitoExtension.java:160)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+Caused by: java.lang.Error: Unresolved compilation problems: 
+	Duplicate field SuiviTraitementService.profilesEnabled
+	Duplicate field SuiviTraitementService.profilesEnabled
+
+	at com.example.suivipatients.services.SuiviTraitementService.<init>(SuiviTraitementService.java:31)
+	at java.base/java.lang.invoke.MethodHandle.invokeWithArguments(MethodHandle.java:732)
+	at org.mockito.internal.util.reflection.InstrumentationMemberAccessor$Dispatcher$ByteBuddy$DvYHYiU6.invokeWithArguments(Unknown Source)
+	at org.mockito.internal.util.reflection.InstrumentationMemberAccessor.lambda$newInstance$0(InstrumentationMemberAccessor.java:213)
+	at org.mockito.internal.util.reflection.InstrumentationMemberAccessor.newInstance(InstrumentationMemberAccessor.java:202)
+	at org.mockito.internal.util.reflection.InstrumentationMemberAccessor.newInstance(InstrumentationMemberAccessor.java:175)
+	at org.mockito.internal.util.reflection.ModuleMemberAccessor.newInstance(ModuleMemberAccessor.java:42)
+	at org.mockito.internal.util.reflection.FieldInitializer$ParameterizedConstructorInstantiator.instantiate(FieldInitializer.java:291)
+	at org.mockito.internal.util.reflection.FieldInitializer.acquireFieldInstance(FieldInitializer.java:146)
+	at org.mockito.internal.util.reflection.FieldInitializer.initialize(FieldInitializer.java:91)
+	at org.mockito.internal.configuration.injection.ConstructorInjection.processInjection(ConstructorInjection.java:48)
+	at org.mockito.internal.configuration.injection.MockInjectionStrategy.process(MockInjectionStrategy.java:68)
+	at org.mockito.internal.configuration.injection.MockInjectionStrategy.relayProcessToNextStrategy(MockInjectionStrategy.java:91)
+	at org.mockito.internal.configuration.injection.MockInjectionStrategy.process(MockInjectionStrategy.java:71)
+	at org.mockito.internal.configuration.injection.MockInjection$OngoingMockInjection.apply(MockInjection.java:88)
+	at org.mockito.internal.configuration.DefaultInjectionEngine.injectMocksOnFields(DefaultInjectionEngine.java:26)
+	at org.mockito.internal.configuration.InjectingAnnotationEngine.injectCloseableMocks(InjectingAnnotationEngine.java:107)
+	at org.mockito.internal.configuration.InjectingAnnotationEngine.process(InjectingAnnotationEngine.java:48)
+	at org.mockito.MockitoAnnotations.openMocks(MockitoAnnotations.java:81)
+	at org.mockito.internal.framework.DefaultMockitoSession.<init>(DefaultMockitoSession.java:43)
+	at org.mockito.internal.session.DefaultMockitoSessionBuilder.startMocking(DefaultMockitoSessionBuilder.java:83)
+	... 3 more
+
+com.example.suivipatients.services.SuiviTraitementServiceTest.deleteTreatment_callsRepositoryDelete -- Time elapsed: 0.045 s <<< ERROR!
+org.mockito.exceptions.misusing.InjectMocksException: 
+
+Cannot instantiate @InjectMocks field named 'service' of type 'class com.example.suivipatients.services.SuiviTraitementService'.
+You haven't provided the instance at field declaration so I tried to construct the instance.
+However the constructor or the initialization block threw an exception : Unresolved compilation problems: 
+	Duplicate field SuiviTraitementService.profilesEnabled
+	Duplicate field SuiviTraitementService.profilesEnabled
+
+
+	at org.mockito.junit.jupiter.MockitoExtension.beforeEach(MockitoExtension.java:160)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+Caused by: java.lang.Error: Unresolved compilation problems: 
+	Duplicate field SuiviTraitementService.profilesEnabled
+	Duplicate field SuiviTraitementService.profilesEnabled
+
+	at com.example.suivipatients.services.SuiviTraitementService.<init>(SuiviTraitementService.java:31)
+	at java.base/java.lang.invoke.MethodHandle.invokeWithArguments(MethodHandle.java:732)
+	at org.mockito.internal.util.reflection.InstrumentationMemberAccessor$Dispatcher$ByteBuddy$DvYHYiU6.invokeWithArguments(Unknown Source)
+	at org.mockito.internal.util.reflection.InstrumentationMemberAccessor.lambda$newInstance$0(InstrumentationMemberAccessor.java:213)
+	at org.mockito.internal.util.reflection.InstrumentationMemberAccessor.newInstance(InstrumentationMemberAccessor.java:202)
+	at org.mockito.internal.util.reflection.InstrumentationMemberAccessor.newInstance(InstrumentationMemberAccessor.java:175)
+	at org.mockito.internal.util.reflection.ModuleMemberAccessor.newInstance(ModuleMemberAccessor.java:42)
+	at org.mockito.internal.util.reflection.FieldInitializer$ParameterizedConstructorInstantiator.instantiate(FieldInitializer.java:291)
+	at org.mockito.internal.util.reflection.FieldInitializer.acquireFieldInstance(FieldInitializer.java:146)
+	at org.mockito.internal.util.reflection.FieldInitializer.initialize(FieldInitializer.java:91)
+	at org.mockito.internal.configuration.injection.ConstructorInjection.processInjection(ConstructorInjection.java:48)
+	at org.mockito.internal.configuration.injection.MockInjectionStrategy.process(MockInjectionStrategy.java:68)
+	at org.mockito.internal.configuration.injection.MockInjectionStrategy.relayProcessToNextStrategy(MockInjectionStrategy.java:91)
+	at org.mockito.internal.configuration.injection.MockInjectionStrategy.process(MockInjectionStrategy.java:71)
+	at org.mockito.internal.configuration.injection.MockInjection$OngoingMockInjection.apply(MockInjection.java:88)
+	at org.mockito.internal.configuration.DefaultInjectionEngine.injectMocksOnFields(DefaultInjectionEngine.java:26)
+	at org.mockito.internal.configuration.InjectingAnnotationEngine.injectCloseableMocks(InjectingAnnotationEngine.java:107)
+	at org.mockito.internal.configuration.InjectingAnnotationEngine.process(InjectingAnnotationEngine.java:48)
+	at org.mockito.MockitoAnnotations.openMocks(MockitoAnnotations.java:81)
+	at org.mockito.internal.framework.DefaultMockitoSession.<init>(DefaultMockitoSession.java:43)
+	at org.mockito.internal.session.DefaultMockitoSessionBuilder.startMocking(DefaultMockitoSessionBuilder.java:83)
+	... 3 more
+
+com.example.suivipatients.services.SuiviTraitementServiceTest.createTreatment_success_withValidPatient -- Time elapsed: 0.084 s <<< ERROR!
+org.mockito.exceptions.misusing.InjectMocksException: 
+
+Cannot instantiate @InjectMocks field named 'service' of type 'class com.example.suivipatients.services.SuiviTraitementService'.
+You haven't provided the instance at field declaration so I tried to construct the instance.
+However the constructor or the initialization block threw an exception : Unresolved compilation problems: 
+	Duplicate field SuiviTraitementService.profilesEnabled
+	Duplicate field SuiviTraitementService.profilesEnabled
+
+
+	at org.mockito.junit.jupiter.MockitoExtension.beforeEach(MockitoExtension.java:160)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+Caused by: java.lang.Error: Unresolved compilation problems: 
+	Duplicate field SuiviTraitementService.profilesEnabled
+	Duplicate field SuiviTraitementService.profilesEnabled
+
+	at com.example.suivipatients.services.SuiviTraitementService.<init>(SuiviTraitementService.java:31)
+	at java.base/java.lang.invoke.MethodHandle.invokeWithArguments(MethodHandle.java:732)
+	at org.mockito.internal.util.reflection.InstrumentationMemberAccessor$Dispatcher$ByteBuddy$DvYHYiU6.invokeWithArguments(Unknown Source)
+	at org.mockito.internal.util.reflection.InstrumentationMemberAccessor.lambda$newInstance$0(InstrumentationMemberAccessor.java:213)
+	at org.mockito.internal.util.reflection.InstrumentationMemberAccessor.newInstance(InstrumentationMemberAccessor.java:202)
+	at org.mockito.internal.util.reflection.InstrumentationMemberAccessor.newInstance(InstrumentationMemberAccessor.java:175)
+	at org.mockito.internal.util.reflection.ModuleMemberAccessor.newInstance(ModuleMemberAccessor.java:42)
+	at org.mockito.internal.util.reflection.FieldInitializer$ParameterizedConstructorInstantiator.instantiate(FieldInitializer.java:291)
+	at org.mockito.internal.util.reflection.FieldInitializer.acquireFieldInstance(FieldInitializer.java:146)
+	at org.mockito.internal.util.reflection.FieldInitializer.initialize(FieldInitializer.java:91)
+	at org.mockito.internal.configuration.injection.ConstructorInjection.processInjection(ConstructorInjection.java:48)
+	at org.mockito.internal.configuration.injection.MockInjectionStrategy.process(MockInjectionStrategy.java:68)
+	at org.mockito.internal.configuration.injection.MockInjectionStrategy.relayProcessToNextStrategy(MockInjectionStrategy.java:91)
+	at org.mockito.internal.configuration.injection.MockInjectionStrategy.process(MockInjectionStrategy.java:71)
+	at org.mockito.internal.configuration.injection.MockInjection$OngoingMockInjection.apply(MockInjection.java:88)
+	at org.mockito.internal.configuration.DefaultInjectionEngine.injectMocksOnFields(DefaultInjectionEngine.java:26)
+	at org.mockito.internal.configuration.InjectingAnnotationEngine.injectCloseableMocks(InjectingAnnotationEngine.java:107)
+	at org.mockito.internal.configuration.InjectingAnnotationEngine.process(InjectingAnnotationEngine.java:48)
+	at org.mockito.MockitoAnnotations.openMocks(MockitoAnnotations.java:81)
+	at org.mockito.internal.framework.DefaultMockitoSession.<init>(DefaultMockitoSession.java:43)
+	at org.mockito.internal.session.DefaultMockitoSessionBuilder.startMocking(DefaultMockitoSessionBuilder.java:83)
+	... 3 more
+
+com.example.suivipatients.services.SuiviTraitementServiceTest.updateTreatment_updatesFieldsAndStatus -- Time elapsed: 0.030 s <<< ERROR!
+org.mockito.exceptions.misusing.InjectMocksException: 
+
+Cannot instantiate @InjectMocks field named 'service' of type 'class com.example.suivipatients.services.SuiviTraitementService'.
+You haven't provided the instance at field declaration so I tried to construct the instance.
+However the constructor or the initialization block threw an exception : Unresolved compilation problems: 
+	Duplicate field SuiviTraitementService.profilesEnabled
+	Duplicate field SuiviTraitementService.profilesEnabled
+
+
+	at org.mockito.junit.jupiter.MockitoExtension.beforeEach(MockitoExtension.java:160)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+Caused by: java.lang.Error: Unresolved compilation problems: 
+	Duplicate field SuiviTraitementService.profilesEnabled
+	Duplicate field SuiviTraitementService.profilesEnabled
+
+	at com.example.suivipatients.services.SuiviTraitementService.<init>(SuiviTraitementService.java:31)
+	at java.base/java.lang.invoke.MethodHandle.invokeWithArguments(MethodHandle.java:732)
+	at org.mockito.internal.util.reflection.InstrumentationMemberAccessor$Dispatcher$ByteBuddy$DvYHYiU6.invokeWithArguments(Unknown Source)
+	at org.mockito.internal.util.reflection.InstrumentationMemberAccessor.lambda$newInstance$0(InstrumentationMemberAccessor.java:213)
+	at org.mockito.internal.util.reflection.InstrumentationMemberAccessor.newInstance(InstrumentationMemberAccessor.java:202)
+	at org.mockito.internal.util.reflection.InstrumentationMemberAccessor.newInstance(InstrumentationMemberAccessor.java:175)
+	at org.mockito.internal.util.reflection.ModuleMemberAccessor.newInstance(ModuleMemberAccessor.java:42)
+	at org.mockito.internal.util.reflection.FieldInitializer$ParameterizedConstructorInstantiator.instantiate(FieldInitializer.java:291)
+	at org.mockito.internal.util.reflection.FieldInitializer.acquireFieldInstance(FieldInitializer.java:146)
+	at org.mockito.internal.util.reflection.FieldInitializer.initialize(FieldInitializer.java:91)
+	at org.mockito.internal.configuration.injection.ConstructorInjection.processInjection(ConstructorInjection.java:48)
+	at org.mockito.internal.configuration.injection.MockInjectionStrategy.process(MockInjectionStrategy.java:68)
+	at org.mockito.internal.configuration.injection.MockInjectionStrategy.relayProcessToNextStrategy(MockInjectionStrategy.java:91)
+	at org.mockito.internal.configuration.injection.MockInjectionStrategy.process(MockInjectionStrategy.java:71)
+	at org.mockito.internal.configuration.injection.MockInjection$OngoingMockInjection.apply(MockInjection.java:88)
+	at org.mockito.internal.configuration.DefaultInjectionEngine.injectMocksOnFields(DefaultInjectionEngine.java:26)
+	at org.mockito.internal.configuration.InjectingAnnotationEngine.injectCloseableMocks(InjectingAnnotationEngine.java:107)
+	at org.mockito.internal.configuration.InjectingAnnotationEngine.process(InjectingAnnotationEngine.java:48)
+	at org.mockito.MockitoAnnotations.openMocks(MockitoAnnotations.java:81)
+	at org.mockito.internal.framework.DefaultMockitoSession.<init>(DefaultMockitoSession.java:43)
+	at org.mockito.internal.session.DefaultMockitoSessionBuilder.startMocking(DefaultMockitoSessionBuilder.java:83)
+	... 3 more
+
+com.example.suivipatients.services.SuiviTraitementServiceTest.getActiveTreatments_returnsList -- Time elapsed: 0.032 s <<< ERROR!
+org.mockito.exceptions.misusing.InjectMocksException: 
+
+Cannot instantiate @InjectMocks field named 'service' of type 'class com.example.suivipatients.services.SuiviTraitementService'.
+You haven't provided the instance at field declaration so I tried to construct the instance.
+However the constructor or the initialization block threw an exception : Unresolved compilation problems: 
+	Duplicate field SuiviTraitementService.profilesEnabled
+	Duplicate field SuiviTraitementService.profilesEnabled
+
+
+	at org.mockito.junit.jupiter.MockitoExtension.beforeEach(MockitoExtension.java:160)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+Caused by: java.lang.Error: Unresolved compilation problems: 
+	Duplicate field SuiviTraitementService.profilesEnabled
+	Duplicate field SuiviTraitementService.profilesEnabled
+
+	at com.example.suivipatients.services.SuiviTraitementService.<init>(SuiviTraitementService.java:31)
+	at java.base/java.lang.invoke.MethodHandle.invokeWithArguments(MethodHandle.java:732)
+	at org.mockito.internal.util.reflection.InstrumentationMemberAccessor$Dispatcher$ByteBuddy$DvYHYiU6.invokeWithArguments(Unknown Source)
+	at org.mockito.internal.util.reflection.InstrumentationMemberAccessor.lambda$newInstance$0(InstrumentationMemberAccessor.java:213)
+	at org.mockito.internal.util.reflection.InstrumentationMemberAccessor.newInstance(InstrumentationMemberAccessor.java:202)
+	at org.mockito.internal.util.reflection.InstrumentationMemberAccessor.newInstance(InstrumentationMemberAccessor.java:175)
+	at org.mockito.internal.util.reflection.ModuleMemberAccessor.newInstance(ModuleMemberAccessor.java:42)
+	at org.mockito.internal.util.reflection.FieldInitializer$ParameterizedConstructorInstantiator.instantiate(FieldInitializer.java:291)
+	at org.mockito.internal.util.reflection.FieldInitializer.acquireFieldInstance(FieldInitializer.java:146)
+	at org.mockito.internal.util.reflection.FieldInitializer.initialize(FieldInitializer.java:91)
+	at org.mockito.internal.configuration.injection.ConstructorInjection.processInjection(ConstructorInjection.java:48)
+	at org.mockito.internal.configuration.injection.MockInjectionStrategy.process(MockInjectionStrategy.java:68)
+	at org.mockito.internal.configuration.injection.MockInjectionStrategy.relayProcessToNextStrategy(MockInjectionStrategy.java:91)
+	at org.mockito.internal.configuration.injection.MockInjectionStrategy.process(MockInjectionStrategy.java:71)
+	at org.mockito.internal.configuration.injection.MockInjection$OngoingMockInjection.apply(MockInjection.java:88)
+	at org.mockito.internal.configuration.DefaultInjectionEngine.injectMocksOnFields(DefaultInjectionEngine.java:26)
+	at org.mockito.internal.configuration.InjectingAnnotationEngine.injectCloseableMocks(InjectingAnnotationEngine.java:107)
+	at org.mockito.internal.configuration.InjectingAnnotationEngine.process(InjectingAnnotationEngine.java:48)
+	at org.mockito.MockitoAnnotations.openMocks(MockitoAnnotations.java:81)
+	at org.mockito.internal.framework.DefaultMockitoSession.<init>(DefaultMockitoSession.java:43)
+	at org.mockito.internal.session.DefaultMockitoSessionBuilder.startMocking(DefaultMockitoSessionBuilder.java:83)
+	... 3 more
+
+com.example.suivipatients.services.SuiviTraitementServiceTest.statsCounts_returnedFromRepositorySizes -- Time elapsed: 0.016 s <<< ERROR!
+org.mockito.exceptions.misusing.InjectMocksException: 
+
+Cannot instantiate @InjectMocks field named 'service' of type 'class com.example.suivipatients.services.SuiviTraitementService'.
+You haven't provided the instance at field declaration so I tried to construct the instance.
+However the constructor or the initialization block threw an exception : Unresolved compilation problems: 
+	Duplicate field SuiviTraitementService.profilesEnabled
+	Duplicate field SuiviTraitementService.profilesEnabled
+
+
+	at org.mockito.junit.jupiter.MockitoExtension.beforeEach(MockitoExtension.java:160)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+Caused by: java.lang.Error: Unresolved compilation problems: 
+	Duplicate field SuiviTraitementService.profilesEnabled
+	Duplicate field SuiviTraitementService.profilesEnabled
+
+	at com.example.suivipatients.services.SuiviTraitementService.<init>(SuiviTraitementService.java:31)
+	at java.base/java.lang.invoke.MethodHandle.invokeWithArguments(MethodHandle.java:732)
+	at org.mockito.internal.util.reflection.InstrumentationMemberAccessor$Dispatcher$ByteBuddy$DvYHYiU6.invokeWithArguments(Unknown Source)
+	at org.mockito.internal.util.reflection.InstrumentationMemberAccessor.lambda$newInstance$0(InstrumentationMemberAccessor.java:213)
+	at org.mockito.internal.util.reflection.InstrumentationMemberAccessor.newInstance(InstrumentationMemberAccessor.java:202)
+	at org.mockito.internal.util.reflection.InstrumentationMemberAccessor.newInstance(InstrumentationMemberAccessor.java:175)
+	at org.mockito.internal.util.reflection.ModuleMemberAccessor.newInstance(ModuleMemberAccessor.java:42)
+	at org.mockito.internal.util.reflection.FieldInitializer$ParameterizedConstructorInstantiator.instantiate(FieldInitializer.java:291)
+	at org.mockito.internal.util.reflection.FieldInitializer.acquireFieldInstance(FieldInitializer.java:146)
+	at org.mockito.internal.util.reflection.FieldInitializer.initialize(FieldInitializer.java:91)
+	at org.mockito.internal.configuration.injection.ConstructorInjection.processInjection(ConstructorInjection.java:48)
+	at org.mockito.internal.configuration.injection.MockInjectionStrategy.process(MockInjectionStrategy.java:68)
+	at org.mockito.internal.configuration.injection.MockInjectionStrategy.relayProcessToNextStrategy(MockInjectionStrategy.java:91)
+	at org.mockito.internal.configuration.injection.MockInjectionStrategy.process(MockInjectionStrategy.java:71)
+	at org.mockito.internal.configuration.injection.MockInjection$OngoingMockInjection.apply(MockInjection.java:88)
+	at org.mockito.internal.configuration.DefaultInjectionEngine.injectMocksOnFields(DefaultInjectionEngine.java:26)
+	at org.mockito.internal.configuration.InjectingAnnotationEngine.injectCloseableMocks(InjectingAnnotationEngine.java:107)
+	at org.mockito.internal.configuration.InjectingAnnotationEngine.process(InjectingAnnotationEngine.java:48)
+	at org.mockito.MockitoAnnotations.openMocks(MockitoAnnotations.java:81)
+	at org.mockito.internal.framework.DefaultMockitoSession.<init>(DefaultMockitoSession.java:43)
+	at org.mockito.internal.session.DefaultMockitoSessionBuilder.startMocking(DefaultMockitoSessionBuilder.java:83)
+	... 3 more
+
+com.example.suivipatients.services.SuiviTraitementServiceTest.validateDose_setsFlags -- Time elapsed: 0.460 s <<< ERROR!
+org.mockito.exceptions.misusing.InjectMocksException: 
+
+Cannot instantiate @InjectMocks field named 'service' of type 'class com.example.suivipatients.services.SuiviTraitementService'.
+You haven't provided the instance at field declaration so I tried to construct the instance.
+However the constructor or the initialization block threw an exception : Unresolved compilation problems: 
+	Duplicate field SuiviTraitementService.profilesEnabled
+	Duplicate field SuiviTraitementService.profilesEnabled
+
+
+	at org.mockito.junit.jupiter.MockitoExtension.beforeEach(MockitoExtension.java:160)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+Caused by: java.lang.Error: Unresolved compilation problems: 
+	Duplicate field SuiviTraitementService.profilesEnabled
+	Duplicate field SuiviTraitementService.profilesEnabled
+
+	at com.example.suivipatients.services.SuiviTraitementService.<init>(SuiviTraitementService.java:31)
+	at java.base/java.lang.invoke.MethodHandle.invokeWithArguments(MethodHandle.java:732)
+	at org.mockito.internal.util.reflection.InstrumentationMemberAccessor$Dispatcher$ByteBuddy$DvYHYiU6.invokeWithArguments(Unknown Source)
+	at org.mockito.internal.util.reflection.InstrumentationMemberAccessor.lambda$newInstance$0(InstrumentationMemberAccessor.java:213)
+	at org.mockito.internal.util.reflection.InstrumentationMemberAccessor.newInstance(InstrumentationMemberAccessor.java:202)
+	at org.mockito.internal.util.reflection.InstrumentationMemberAccessor.newInstance(InstrumentationMemberAccessor.java:175)
+	at org.mockito.internal.util.reflection.ModuleMemberAccessor.newInstance(ModuleMemberAccessor.java:42)
+	at org.mockito.internal.util.reflection.FieldInitializer$ParameterizedConstructorInstantiator.instantiate(FieldInitializer.java:291)
+	at org.mockito.internal.util.reflection.FieldInitializer.acquireFieldInstance(FieldInitializer.java:146)
+	at org.mockito.internal.util.reflection.FieldInitializer.initialize(FieldInitializer.java:91)
+	at org.mockito.internal.configuration.injection.ConstructorInjection.processInjection(ConstructorInjection.java:48)
+	at org.mockito.internal.configuration.injection.MockInjectionStrategy.process(MockInjectionStrategy.java:68)
+	at org.mockito.internal.configuration.injection.MockInjectionStrategy.relayProcessToNextStrategy(MockInjectionStrategy.java:91)
+	at org.mockito.internal.configuration.injection.MockInjectionStrategy.process(MockInjectionStrategy.java:71)
+	at org.mockito.internal.configuration.injection.MockInjection$OngoingMockInjection.apply(MockInjection.java:88)
+	at org.mockito.internal.configuration.DefaultInjectionEngine.injectMocksOnFields(DefaultInjectionEngine.java:26)
+	at org.mockito.internal.configuration.InjectingAnnotationEngine.injectCloseableMocks(InjectingAnnotationEngine.java:107)
+	at org.mockito.internal.configuration.InjectingAnnotationEngine.process(InjectingAnnotationEngine.java:48)
+	at org.mockito.MockitoAnnotations.openMocks(MockitoAnnotations.java:81)
+	at org.mockito.internal.framework.DefaultMockitoSession.<init>(DefaultMockitoSession.java:43)
+	at org.mockito.internal.session.DefaultMockitoSessionBuilder.startMocking(DefaultMockitoSessionBuilder.java:83)
+	... 3 more
+
