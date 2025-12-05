@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
-from device.app import models, crud, schemas
+from app import models, crud, schemas
 
 
 def setup_sqlite_session():

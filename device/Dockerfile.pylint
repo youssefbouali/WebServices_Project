@@ -1,0 +1,24 @@
+# Pylint Dockerfile for Device Service
+# Dedicated container for running code quality checks
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Copy requirements files
+COPY requirements.txt requirements-dev.txt ./
+
+# Install dependencies (we need the actual dependencies to check imports)
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir pylint>=3.0.0
+
+# Copy application code
+COPY ./app ./app
+
+# Copy pylint configuration
+COPY .pylintrc ./
+
+# Set environment variables
+ENV PYTHONPATH=/app
+
+# Default command runs pylint on the app directory
+CMD ["pylint", "app", "--output-format=colorized", "--reports=yes"]

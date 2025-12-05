@@ -89,11 +89,18 @@ run_locust() {
         --html=locust_report.html
 }
 
-# Function to run pylint
+# Function to run pylint (using test container)
 run_lint() {
     echo ""
     echo -e "${GREEN}Running pylint code quality checks...${NC}"
     docker-compose --profile testing run --rm device_tests pylint app
+}
+
+# Function to run pylint (using dedicated pylint container)
+run_lint_dedicated() {
+    echo ""
+    echo -e "${GREEN}Running pylint with dedicated container...${NC}"
+    docker-compose --profile testing run --rm device_pylint
 }
 
 # Function to clean up test artifacts
@@ -123,6 +130,7 @@ show_help() {
     echo "  locust            Start Locust web UI"
     echo "  locust-run        Run Locust in headless mode"
     echo "  lint              Run pylint code quality checks"
+    echo "  lint-only         Run pylint with dedicated container (faster)"
     echo "  cleanup           Remove all test artifacts"
     echo "  help              Show this help message"
     echo ""
@@ -133,6 +141,7 @@ show_help() {
     echo "  $0 locust               # Start Locust UI"
     echo "  $0 locust-run           # Run load test"
     echo "  $0 lint                 # Run code quality checks"
+    echo "  $0 lint-only            # Run pylint only (dedicated)"
     echo "  $0 cleanup              # Clean artifacts"
 }
 
@@ -188,6 +197,9 @@ case "${1:-}" in
         ;;
     "lint")
         run_lint
+        ;;
+    "lint-only")
+        run_lint_dedicated
         ;;
     "cleanup")
         cleanup

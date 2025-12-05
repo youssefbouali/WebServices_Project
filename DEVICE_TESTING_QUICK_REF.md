@@ -22,6 +22,9 @@
 # Code quality
 .\run-device-tests.ps1 lint
 
+# Code quality (dedicated container - faster)
+.\run-device-tests.ps1 lint-only
+
 # Clean up
 .\run-device-tests.ps1 cleanup
 ```
@@ -45,6 +48,9 @@
 
 # Code quality
 ./run-device-tests.sh lint
+
+# Code quality (dedicated container - faster)
+./run-device-tests.sh lint-only
 
 # Clean up
 ./run-device-tests.sh cleanup
@@ -90,8 +96,11 @@ docker-compose --profile testing run --rm device_locust \
 
 ### Pylint
 ```bash
-# Run code quality checks
+# Run code quality checks (integrated)
 docker-compose --profile testing run --rm device_tests pylint app
+
+# Run code quality checks (dedicated container - faster)
+docker-compose --profile testing run --rm device_pylint
 ```
 
 ## 📊 Test Artifacts
@@ -191,6 +200,7 @@ docker-compose down -v
 
 For detailed information, see:
 - **[Device Testing Guide](./DEVICE_TESTING.md)** - Complete documentation
+- **[Pylint Docker Guide](./PYLINT_DOCKER.md)** - Pylint-specific documentation
 
 ---
 

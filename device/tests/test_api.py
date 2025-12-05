@@ -12,16 +12,16 @@ def setup_sqlite():
         poolclass=StaticPool,
     )
     # Patch the device database before importing the app
-    db = importlib.import_module("device.app.database")
+    db = importlib.import_module("app.database")
     db.engine = engine
     db.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
     # Create tables
-    models = importlib.import_module("device.app.models")
+    models = importlib.import_module("app.models")
     models.Base.metadata.create_all(bind=engine)
 
     # Stub InfluxDB write to avoid network
-    influx = importlib.import_module("device.app.influxdb_client")
+    influx = importlib.import_module("app.influxdb_client")
     influx.write_iot_data = lambda device_id, value: None
 
     return engine
@@ -29,7 +29,7 @@ def setup_sqlite():
 
 def test_device_endpoints():
     setup_sqlite()
-    main = importlib.import_module("device.app.main")
+    main = importlib.import_module("app.main")
     client = TestClient(main.app)
 
     # Create

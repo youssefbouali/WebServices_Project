@@ -125,6 +125,19 @@ services:
     profiles:
       - testing
 
+  device_pylint:
+    build:
+      context: ./device
+      dockerfile: Dockerfile.pylint
+    container_name: device_pylint
+    volumes:
+      # Mount source code for live linting
+      - ./device/app:/app/app
+      - ./device/.pylintrc:/app/.pylintrc
+    # Don't start automatically, only when explicitly run
+    profiles:
+      - testing
+
   # --- Profile ---
   mongodb:
     image: mongo:4.4

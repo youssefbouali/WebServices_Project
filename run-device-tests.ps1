@@ -93,11 +93,18 @@ function Run-Locust($users, $spawnRate, $runTime) {
         --html=locust_report.html
 }
 
-# Function to run pylint
+# Function to run pylint (using test container)
 function Run-Lint {
     Write-Output ""
     Write-ColorOutput Green "Running pylint code quality checks..."
     docker-compose --profile testing run --rm device_tests pylint app
+}
+
+# Function to run pylint (using dedicated pylint container)
+function Run-Lint-Dedicated {
+    Write-Output ""
+    Write-ColorOutput Green "Running pylint with dedicated container..."
+    docker-compose --profile testing run --rm device_pylint
 }
 
 # Function to clean up test artifacts
@@ -141,6 +148,7 @@ function Show-Help {
     Write-Output "  locust            Start Locust web UI"
     Write-Output "  locust-run        Run Locust in headless mode"
     Write-Output "  lint              Run pylint code quality checks"
+    Write-Output "  lint-only         Run pylint with dedicated container (faster)"
     Write-Output "  cleanup           Remove all test artifacts"
     Write-Output "  help              Show this help message"
     Write-Output ""
@@ -151,6 +159,7 @@ function Show-Help {
     Write-Output "  .\run-device-tests.ps1 locust               # Start Locust UI"
     Write-Output "  .\run-device-tests.ps1 locust-run           # Run load test"
     Write-Output "  .\run-device-tests.ps1 lint                 # Run code quality checks"
+    Write-Output "  .\run-device-tests.ps1 lint-only            # Run pylint only (dedicated)"
     Write-Output "  .\run-device-tests.ps1 cleanup              # Clean artifacts"
 }
 
@@ -208,6 +217,9 @@ switch ($Command.ToLower()) {
     }
     "lint" {
         Run-Lint
+    }
+    "lint-only" {
+        Run-Lint-Dedicated
     }
     "cleanup" {
         Cleanup

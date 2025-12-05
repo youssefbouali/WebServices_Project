@@ -20,7 +20,7 @@ COPY ./app ./app
 COPY ./tests ./tests
 
 # Copy configuration files
-COPY pytest.ini .coveragerc ./
+COPY pytest.ini .coveragerc .pylintrc ./
 COPY wait-for-db.sh ./
 RUN chmod +x wait-for-db.sh
 

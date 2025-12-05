@@ -4,6 +4,21 @@ FROM cypress/included:13.17.0
 # Set working directory
 WORKDIR /app
 
+# Install additional dependencies for Cypress on Linux
+RUN apt-get update && apt-get install -y \
+    libgtk2.0-0 \
+    libgtk-3-0 \
+    libgbm-dev \
+    libnotify-dev \
+    libgconf-2-4 \
+    libnss3 \
+    libxss1 \
+    libasound2 \
+    libxtst6 \
+    xauth \
+    xvfb \
+    && rm -rf /var/lib/apt/lists/*
+
 # Configure npm to use a reliable registry mirror
 RUN npm config set registry https://registry.npmmirror.com
 
@@ -23,6 +38,8 @@ RUN mkdir -p cypress/videos cypress/screenshots
 ENV CYPRESS_baseUrl=http://frontend_service:8080
 ENV CYPRESS_video=true
 ENV CYPRESS_screenshotOnRunFailure=true
+ENV CYPRESS_VERIFY_TIMEOUT=100000
+ENV CI=1
 
 # Default command to run Cypress tests in headless mode
 CMD ["npx", "cypress", "run"]
