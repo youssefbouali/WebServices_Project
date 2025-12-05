@@ -1,0 +1,28 @@
+# Cypress Testing Dockerfile
+FROM cypress/included:13.17.0
+
+# Set working directory
+WORKDIR /app
+
+# Configure npm to use a reliable registry mirror
+RUN npm config set registry https://registry.npmmirror.com
+
+# Copy package files
+COPY package.json package-lock.json* ./
+
+# Install dependencies
+RUN npm install --no-audit --legacy-peer-deps
+
+# Copy the full source code
+COPY . .
+
+# Create directories for Cypress artifacts
+RUN mkdir -p cypress/videos cypress/screenshots
+
+# Set environment variables for Cypress
+ENV CYPRESS_baseUrl=http://frontend_service:8080
+ENV CYPRESS_video=true
+ENV CYPRESS_screenshotOnRunFailure=true
+
+# Default command to run Cypress tests in headless mode
+CMD ["npx", "cypress", "run"]

@@ -1,0 +1,35 @@
+# Testing Dockerfile for Device Service
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements files
+COPY requirements.txt requirements-dev.txt ./
+
+# Install all dependencies (production + development)
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir -r requirements-dev.txt
+
+# Copy application code
+COPY ./app ./app
+COPY ./tests ./tests
+
+# Copy configuration files
+COPY pytest.ini .coveragerc ./
+COPY wait-for-db.sh ./
+RUN chmod +x wait-for-db.sh
+
+# Create directories for test artifacts
+RUN mkdir -p htmlcov coverage_reports test_reports
+
+# Set environment variables for testing
+ENV PYTHONPATH=/app
+ENV TESTING=true
+
+# Default command runs pytest with coverage
+CMD ["pytest", "--cov=app", "--cov-report=html", "--cov-report=term-missing", "--cov-report=xml", "-v"]

@@ -74,6 +74,57 @@ services:
     networks:
       - device-network
 
+  # --- Device Testing Services ---
+  device_tests:
+    build:
+      context: ./device
+      dockerfile: Dockerfile.test
+    container_name: device_tests
+    depends_on:
+      - device_db
+      - influxdb
+    environment:
+      DATABASE_URL: postgresql://device_user:device_pass@device_db:5432/device_database
+      INFLUX_URL: http://influxdb:8086
+      INFLUX_TOKEN: my-token
+      INFLUX_ORG: my-org
+      INFLUX_BUCKET: iot_data
+      TESTING: "true"
+    volumes:
+      # Mount test results back to host
+      - ./device/htmlcov:/app/htmlcov
+      - ./device/coverage_reports:/app/coverage_reports
+      - ./device/test_reports:/app/test_reports
+      - ./device/coverage.xml:/app/coverage.xml
+      # Mount source for live testing (optional)
+      - ./device/tests:/app/tests
+      - ./device/app:/app/app
+    networks:
+      - device-network
+    # Don't start automatically, only when explicitly run
+    profiles:
+      - testing
+
+  device_locust:
+    build:
+      context: ./device
+      dockerfile: Dockerfile.locust
+    container_name: device_locust
+    depends_on:
+      - device_service
+    ports:
+      - "8089:8089"  # Locust web UI
+    environment:
+      LOCUST_HOST: http://device_service:8000
+    volumes:
+      # Mount locustfile for live editing
+      - ./device/locustfile.py:/app/locustfile.py
+    networks:
+      - device-network
+    # Don't start automatically, only when explicitly run
+    profiles:
+      - testing
+
   # --- Profile ---
   mongodb:
     image: mongo:4.4
@@ -208,3 +259,31 @@ services:
       - profile-network
       - device-network
       - planification-network
+
+  # --- Cypress E2E Tests ---
+  cypress_tests:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.cypress
+    container_name: cypress_tests
+    depends_on:
+      - frontend_service
+    environment:
+      CYPRESS_baseUrl: http://frontend_service:8080
+      CYPRESS_video: "true"
+      CYPRESS_screenshotOnRunFailure: "true"
+    volumes:
+      # Mount test results back to host
+      - ./frontend/cypress/videos:/app/cypress/videos
+      - ./frontend/cypress/screenshots:/app/cypress/screenshots
+      # Mount test specs for live editing (optional)
+      - ./frontend/cypress:/app/cypress
+    networks:
+      - frontend-network
+      - suivitraitement-network
+      - profile-network
+      - device-network
+      - planification-network
+    # Don't start automatically, only when explicitly run
+    profiles:
+      - testing

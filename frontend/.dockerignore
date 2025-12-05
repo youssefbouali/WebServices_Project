@@ -16,3 +16,7 @@ Dockerfile
 .idea
 .DS_Store
 coverage
+
+# Cypress test artifacts
+cypress/videos
+cypress/screenshots

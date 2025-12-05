@@ -1,0 +1,19 @@
+# Locust Load Testing Dockerfile for Device Service
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install Locust and dependencies
+RUN pip install --no-cache-dir \
+    locust>=2.15.0 \
+    httpx>=0.24.0
+
+# Copy locustfile
+COPY locustfile.py ./
+
+# Expose Locust web UI port
+EXPOSE 8089
+
+# Default command runs Locust in headless mode
+# Override with docker run arguments for web UI mode
+CMD ["locust", "-f", "locustfile.py", "--host=http://device_service:8000"]
