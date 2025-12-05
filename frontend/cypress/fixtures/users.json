@@ -1,0 +1,20 @@
+{
+    "admin": {
+        "email": "admin@healthfront.com",
+        "password": "Admin123!",
+        "role": "ADMIN",
+        "name": "Admin User"
+    },
+    "doctor": {
+        "email": "doctor@healthfront.com",
+        "password": "Doctor123!",
+        "role": "DOCTOR",
+        "name": "Dr. John Smith"
+    },
+    "patient": {
+        "email": "patient@healthfront.com",
+        "password": "Patient123!",
+        "role": "PATIENT",
+        "name": "Jane Doe"
+    }
+}

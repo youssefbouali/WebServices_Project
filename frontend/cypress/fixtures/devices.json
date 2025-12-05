@@ -1,0 +1,29 @@
+[
+    {
+        "id": "1",
+        "name": "Heart Rate Monitor",
+        "type": "Cardiac",
+        "serialNumber": "HRM-001-2024",
+        "status": "active",
+        "lastReading": "72 bpm",
+        "battery": "85%"
+    },
+    {
+        "id": "2",
+        "name": "Blood Pressure Monitor",
+        "type": "Cardiovascular",
+        "serialNumber": "BPM-002-2024",
+        "status": "active",
+        "lastReading": "120/80 mmHg",
+        "battery": "92%"
+    },
+    {
+        "id": "3",
+        "name": "Glucose Monitor",
+        "type": "Metabolic",
+        "serialNumber": "GLU-003-2024",
+        "status": "inactive",
+        "lastReading": "95 mg/dL",
+        "battery": "45%"
+    }
+]
