@@ -7,3 +7,5 @@ influxdb-client
 alembic
 pytest
 httpx
+coverage
+pytest-cov

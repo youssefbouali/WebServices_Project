@@ -1,0 +1,16 @@
+# Development and Testing Dependencies
+# Install with: pip install -r requirements-dev.txt
+
+# Load Testing
+locust>=2.15.0
+
+# Code Quality
+pylint>=3.0.0
+
+# Testing and Coverage
+pytest>=7.4.0
+pytest-cov>=4.1.0
+coverage>=7.3.0
+
+# Additional Testing Tools
+httpx>=0.24.0
